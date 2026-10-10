@@ -1,0 +1,54 @@
+services:
+  backend:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local-development-only-not-for-production}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
+      DATABASE_ENGINE: django.db.backends.postgresql
+      DB_NAME: ${POSTGRES_DB:-conect_services}
+      DB_USER: ${POSTGRES_USER:-conect_services}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-local-postgres-password}
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-conect_services}
+      POSTGRES_USER: ${POSTGRES_USER:-conect_services}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-postgres-password}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:

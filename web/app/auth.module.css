@@ -1,0 +1,731 @@
+.page {
+  min-height: 100vh;
+  padding: 28px 20px 48px;
+  background:
+    radial-gradient(ellipse at 50% 0, #e8f0fb 0, transparent 44%),
+    #f4f7fc;
+}
+
+.topbar {
+  width: min(980px, 100%);
+  margin: 0 auto;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #15213c;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 0.9;
+  text-decoration: none;
+}
+
+.brandMark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 12px;
+  background: #1c2c51;
+  color: #78baee;
+}
+
+.brand small {
+  display: block;
+  margin-top: 5px;
+  color: #7e8981;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 2.4px;
+  text-transform: uppercase;
+}
+
+.card {
+  width: min(460px, 100%);
+  margin: 54px auto 0;
+  padding: 38px;
+  border: 1px solid #dfe4e9;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 22px 70px #232c3e12;
+}
+
+.eyebrow {
+  margin: 0 0 11px;
+  color: #446d91;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+}
+
+.card h1 {
+  margin: 0;
+  color: #15213c;
+  font-size: clamp(27px, 5vw, 34px);
+  letter-spacing: -1.5px;
+}
+
+.intro {
+  margin: 10px 0 27px;
+  color: #738078;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.requestContext {
+  display: grid;
+  gap: 6px;
+  margin: -10px 0 22px;
+  padding: 14px 16px;
+  border: 1px solid #d8e7f5;
+  border-radius: 10px;
+  background: #f3f8ff;
+  color: #425b76;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.requestContext strong {
+  color: #233f60;
+  font-size: 13px;
+}
+
+.form {
+  display: grid;
+  gap: 17px;
+}
+
+.field {
+  display: grid;
+  gap: 7px;
+  color: #333944;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field input {
+  width: 100%;
+  min-height: 47px;
+  padding: 0 13px;
+  border: 1px solid #dce0e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #252b37;
+  font-size: 14px;
+}
+
+.field select {
+  width: 100%;
+  min-height: 47px;
+  padding: 0 13px;
+  border: 1px solid #dce0e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #252b37;
+  font-size: 14px;
+}
+
+.field input::placeholder {
+  color: #a0aaa2;
+}
+
+.submit {
+  display: flex;
+  min-height: 49px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 3px;
+  border: 0;
+  border-radius: 8px;
+  background: #1c2c51;
+  color: #fff;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.submit:hover {
+  background: #15213c;
+}
+
+.submit:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.notice {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 7px;
+  background: #fff1ec;
+  color: #923f2a;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.success {
+  background: #e8eff6;
+  color: #2c415b;
+}
+
+.switch {
+  margin: 21px 0 0;
+  color: #768279;
+  font-size: 12px;
+  text-align: center;
+}
+
+.switch a,
+.homeLink {
+  color: #1c2c51;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.homeLink {
+  display: block;
+  margin-top: 24px;
+  font-size: 12px;
+  text-align: center;
+}
+
+.accountCard {
+  width: min(680px, 100%);
+}
+
+.accountInfo {
+  margin: 24px 0;
+  padding: 17px;
+  border: 1px solid #e1e5e9;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.accountInfo span {
+  display: block;
+  margin-bottom: 6px;
+  color: #78847b;
+  font-size: 11px;
+}
+
+.accountInfo strong {
+  overflow-wrap: anywhere;
+  color: #242a37;
+  font-size: 14px;
+}
+
+.profileSections {
+  display: grid;
+  gap: 24px;
+}
+
+.managedServiceList {
+  display: grid;
+  gap: 12px;
+}
+
+.managedService {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #e1e7ee;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.managedService .profileHeading {
+  justify-content: flex-start;
+  margin-bottom: 5px;
+}
+
+.managedService h3 {
+  margin: 0;
+  color: #242a37;
+  font-size: 14px;
+}
+
+.managedService p {
+  margin: 0 0 7px;
+  color: #738078;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.managedService small {
+  color: #66758a;
+  font-size: 11px;
+}
+
+.managedServiceActions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.managedServiceActions button {
+  min-height: 36px;
+  padding: 0 11px;
+  border: 1px solid #dce3eb;
+  border-radius: 7px;
+  background: #fff;
+  color: #2e5278;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.managedServiceActions button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.checkboxField {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #333944;
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.checkboxField input {
+  width: 17px;
+  height: 17px;
+  accent-color: #1c2c51;
+}
+
+.profileSection {
+  padding: 20px;
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.profileHeading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.profileHeading h2 {
+  margin: 0;
+  color: #242a37;
+  font-size: 17px;
+  letter-spacing: -0.4px;
+}
+
+.profileBadge {
+  padding: 5px 8px;
+  border-radius: 20px;
+  background: #e4ecf3;
+  color: #374f6b;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.profileHint {
+  margin: 0 0 15px;
+  color: #768279;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.verificationPanel {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+  padding: 16px;
+  border: 1px solid #dce6f1;
+  border-radius: 10px;
+  background: #fff;
+}
+
+.verificationPanel h3 {
+  margin: 0 0 6px;
+  color: #263d59;
+  font-size: 14px;
+}
+
+.verificationPanel > div > p {
+  margin: 0;
+  color: #69798d;
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.verificationFeedback {
+  margin: 0;
+  padding: 11px 13px;
+  border-radius: 7px;
+  background: #fff6e8;
+  color: #76532d;
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.verificationDocumentList {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.verificationDocumentList li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid #e7edf4;
+  border-radius: 8px;
+  background: #f8fafc;
+  color: #35475e;
+  font-size: 12px;
+}
+
+.verificationDocumentList small {
+  display: block;
+  margin-top: 4px;
+  color: #8793a1;
+  font-size: 10px;
+}
+
+.documentRemove {
+  border: 0;
+  background: transparent;
+  color: #8d4b3c;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.documentRemove:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+
+.verificationUploadForm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr) auto;
+  align-items: end;
+  gap: 12px;
+}
+
+.verificationUploadForm > button {
+  min-height: 47px;
+  padding: 0 13px;
+  border: 1px solid #dce3eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #2e5278;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.verificationUploadForm > button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.verificationPanel > .submit {
+  width: 100%;
+}
+
+.verificationPanel > .submit:disabled {
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .verificationUploadForm {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field span {
+  color: #89948c;
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.field textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 12px 13px;
+  resize: vertical;
+  border: 1px solid #dce0e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #252b37;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+@media (max-width: 600px) {
+  .managedService {
+    grid-template-columns: 1fr;
+  }
+
+  .managedServiceActions {
+    justify-content: flex-start;
+  }
+}
+
+.submitLink {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #1c2c51;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.orderList {
+  display: grid;
+  gap: 13px;
+  margin-top: 22px;
+}
+
+.orderCard {
+  padding: 19px;
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.orderTopline,
+.orderMetadata {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+}
+
+.orderCategory {
+  color: #446d91;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.orderCard h2,
+.orderEmpty h2 {
+  margin: 12px 0 7px;
+  color: #242a37;
+  font-size: 17px;
+}
+
+.orderCard p,
+.orderEmpty p {
+  margin: 0 0 14px;
+  color: #768279;
+  font-size: 12px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+.orderMetadata {
+  margin-bottom: 10px;
+  color: #637268;
+  font-size: 11px;
+}
+
+.orderMetadata strong {
+  color: #2c415b;
+}
+
+.orderCard > small {
+  color: #89948c;
+  font-size: 10px;
+}
+
+.orderEmpty {
+  margin-top: 22px;
+  padding: 23px;
+  border: 1px dashed #dce0e5;
+  border-radius: 10px;
+}
+
+.bookingList {
+  display: grid;
+  gap: 14px;
+  margin-top: 22px;
+}
+
+.bookingCard {
+  padding: 20px;
+  border: 1px solid #dce4ef;
+  border-radius: 11px;
+  background: #f8fafc;
+}
+
+.bookingCard h2 {
+  margin: 14px 0 7px;
+  color: #1b2e49;
+  font-size: 19px;
+}
+
+.bookingService {
+  margin: 0 0 13px;
+  color: #61748d;
+  font-size: 12px;
+}
+
+.bookingSchedule {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 14px 0;
+  padding: 13px;
+  border-radius: 8px;
+  background: #eaf1fa;
+  color: #536984;
+  font-size: 11px;
+}
+
+.bookingSchedule strong {
+  color: #1d3e67;
+}
+
+.bookingActions {
+  display: grid;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid #dce4ef;
+}
+
+.dangerButton {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid #ecd7d7;
+  border-radius: 8px;
+  background: #fff;
+  color: #9b4040;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.dangerButton:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.proposalSection {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.proposalSection h3 {
+  margin: 0;
+  color: #333944;
+  font-size: 13px;
+}
+
+.proposalCard {
+  padding: 14px;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.proposalCard > p {
+  margin: 11px 0;
+}
+
+.sentProposal {
+  display: grid;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 8px;
+  background: #e8eff6;
+  color: #2c415b;
+  font-size: 12px;
+}
+
+.sentProposal span {
+  color: #68766e;
+  font-size: 11px;
+}
+
+.inlineProposal {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+  padding-top: 15px;
+  border-top: 1px solid #e1e5e9;
+}
+
+.accountActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.secondary {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid #dce0e5;
+  border-radius: 8px;
+  background: #fff;
+  color: #1c2c51;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding: 20px 14px 32px;
+  }
+
+  .card {
+    margin-top: 34px;
+    padding: 28px 22px;
+  }
+
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+}
