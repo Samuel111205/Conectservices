@@ -16,6 +16,7 @@ async function obterConta(tokenAcesso: string) {
   return fetch(`${URL_BASE_API}/auth/me/`, {
     headers: { Accept: "application/json", Authorization: `Bearer ${tokenAcesso}` },
     cache: "no-store",
+    signal: AbortSignal.timeout(12_000),
   });
 }
 
@@ -38,6 +39,7 @@ export async function GET() {
         headers: { Accept: "application/json", "Content-Type": "application/json" },
         body: JSON.stringify({ refresh: tokenAtualizacao }),
         cache: "no-store",
+        signal: AbortSignal.timeout(12_000),
       });
 
       if (respostaAtualizacao.ok) {

@@ -4,7 +4,7 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from apps.reviews.models import Review
@@ -218,3 +218,27 @@ class ProviderDiscoveryView(generics.ListAPIView):
                 }
             )
         return consulta.distinct().order_by(ordering_fields[ordering], "pk")
+
+
+class ProviderPublicDetailView(generics.RetrieveAPIView):
+    serializer_class = ProviderDiscoverySerializer
+    permission_classes = (AllowAny,)
+
+    def get_queryset(self):
+        reviews = Review.objects.filter(
+            booking__provider_id=OuterRef("pk"),
+        ).order_by().values("booking__provider_id")
+        review_average = reviews.annotate(value=Avg("rating")).values("value")[:1]
+        review_count = reviews.annotate(value=Count("pk")).values("value")[:1]
+        return Provider.objects.filter(
+            verification_status=Provider.VerificationStatus.VERIFIED,
+            user__is_active=True,
+        ).annotate(
+            active_service_count=Count(
+                "services",
+                filter=Q(services__is_active=True, services__category__is_active=True),
+                distinct=True,
+            ),
+            average_rating=Subquery(review_average),
+            review_count=Coalesce(Subquery(review_count), Value(0)),
+        ).filter(active_service_count__gt=0)

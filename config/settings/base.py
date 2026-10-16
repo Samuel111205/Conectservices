@@ -163,7 +163,18 @@ DEFAULT_FROM_EMAIL = os.environ.get("DEFAULT_FROM_EMAIL", "")
 EMAIL_NOTIFICATIONS_ENABLED = (
     os.environ.get("EMAIL_NOTIFICATIONS_ENABLED", "true").lower() == "true"
 )
+PUSH_NOTIFICATIONS_ENABLED = (
+    os.environ.get("PUSH_NOTIFICATIONS_ENABLED", "false").lower() == "true"
+)
+EXPO_ACCESS_TOKEN = os.environ.get("EXPO_ACCESS_TOKEN", "")
 WEB_APP_URL = os.environ.get("WEB_APP_URL", "").rstrip("/")
+CELERY_BROKER_URL = os.environ.get(
+    "CELERY_BROKER_URL", REDIS_URL or "redis://localhost:6379/1"
+)
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30
+CELERY_TASK_SOFT_TIME_LIMIT = 25
 
 CORS_ALLOWED_ORIGINS = [
     origin.strip()
@@ -184,6 +195,7 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "auth_login": "5/minute",
         "auth_register": "5/hour",
+        "auth_recovery": "5/hour",
     },
 }
 

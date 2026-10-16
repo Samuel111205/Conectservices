@@ -98,3 +98,39 @@ class ProviderVerificationDocument(models.Model):
 
     def __str__(self):
         return f"{self.get_document_type_display()} — {self.provider}"
+
+
+class ProviderVerificationAuditEvent(models.Model):
+    """Immutable history of administrative provider verification decisions."""
+
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="provider_verification_events",
+    )
+    provider = models.ForeignKey(
+        Provider,
+        on_delete=models.PROTECT,
+        related_name="verification_events",
+    )
+    provider_name_snapshot = models.CharField(max_length=160)
+    previous_status = models.CharField(max_length=16, blank=True)
+    new_status = models.CharField(
+        max_length=16,
+        choices=Provider.VerificationStatus.choices,
+    )
+    feedback_snapshot = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        verbose_name = "evento de auditoria de verificação"
+        verbose_name_plural = "eventos de auditoria de verificação"
+
+    def __str__(self):
+        return (
+            f"Verificação de {self.provider_name_snapshot}: "
+            f"{self.previous_status or '—'} → {self.new_status}"
+        )

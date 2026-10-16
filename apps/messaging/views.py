@@ -13,14 +13,17 @@ from apps.proposals.models import Proposal
 from .models import Conversation, Message, Notification
 from .serializers import (
     ConversationSerializer,
+    DeactivatePushTokenSerializer,
     MessageSerializer,
     NotificationSerializer,
     OpenConversationSerializer,
+    PushDeviceTokenSerializer,
 )
 from .services import (
     marcar_todas_notificacoes_como_lidas,
     marcar_notificacoes_conversa_como_lidas,
     marcar_notificacao_como_lida,
+    desativar_dispositivo_push,
 )
 
 
@@ -63,12 +66,16 @@ class ConversationViewSet(
         last_message = Message.objects.filter(
             conversation_id=OuterRef("pk"),
         ).order_by("-created_at", "-pk").values("created_at")[:1]
+        last_message_preview = Message.objects.filter(
+            conversation_id=OuterRef("pk"),
+        ).order_by("-created_at", "-pk").values("body")[:1]
         return Conversation.objects.filter(
             Q(proposal__order__client=utilizador)
             | Q(proposal__provider__user=utilizador)
         ).select_related(
             "proposal",
             "proposal__order",
+            "proposal__order__client",
             "proposal__provider",
         ).annotate(
             unread_count=Count(
@@ -80,6 +87,7 @@ class ConversationViewSet(
                 distinct=True,
             ),
             last_message_at=Subquery(last_message),
+            last_message_preview=Subquery(last_message_preview),
         ).order_by("-updated_at", "-pk")
 
     @action(detail=True, methods=("get", "post"))
@@ -146,3 +154,28 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             user=request.user,
         )
         return Response(self.get_serializer(notificacao).data)
+
+
+class PushDeviceTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    serializer_class = PushDeviceTokenSerializer
+    permission_classes = (IsAuthenticated,)
+    http_method_names = ("post", "head", "options")
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        device = serializer.save()
+        return Response(
+            self.get_serializer(device).data,
+            status=status.HTTP_200_OK,
+        )
+
+    @action(detail=False, methods=("post",))
+    def deactivate(self, request):
+        serializer = DeactivatePushTokenSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        count = desativar_dispositivo_push(
+            user=request.user,
+            token=serializer.validated_data["token"],
+        )
+        return Response({"deactivated": bool(count)})

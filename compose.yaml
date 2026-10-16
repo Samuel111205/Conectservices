@@ -14,8 +14,34 @@ services:
       DB_HOST: db
       DB_PORT: 5432
       REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:3000}
     ports:
       - "8000:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  worker:
+    build: .
+    command: celery -A config worker --loglevel=info
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-local-development-only-not-for-production}
+      DJANGO_ALLOWED_HOSTS: ${DJANGO_ALLOWED_HOSTS:-localhost,127.0.0.1}
+      DATABASE_ENGINE: django.db.backends.postgresql
+      DB_NAME: ${POSTGRES_DB:-conect_services}
+      DB_USER: ${POSTGRES_USER:-conect_services}
+      DB_PASSWORD: ${POSTGRES_PASSWORD:-local-postgres-password}
+      DB_HOST: db
+      DB_PORT: 5432
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      WEB_APP_URL: ${WEB_APP_URL:-http://localhost:3000}
     volumes:
       - .:/app
     depends_on:

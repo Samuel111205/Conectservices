@@ -1,11 +1,11 @@
 .site {
-  --ink: #17253b;
-  --muted: #68778d;
-  --green: #2457a6;
-  --green-dark: #173b70;
-  --lime: #a8e4f5;
-  --cream: #f4f7fc;
-  --line: #e2e9f3;
+  --ink: #182b45;
+  --muted: #64748b;
+  --brand-blue: #1769aa;
+  --brand-blue-dark: #123b66;
+  --lime: #e5bb63;
+  --cream: #f5f8fc;
+  --line: #e1e9f2;
   --white: #fff;
   overflow: hidden;
   color: var(--ink);
@@ -27,7 +27,7 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--green-dark);
+  background: var(--brand-blue-dark);
   color: #e8eef5;
   font-size: 11px;
   letter-spacing: 0.02em;
@@ -65,7 +65,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 22px;
   font-weight: 800;
   letter-spacing: -1.1px;
@@ -78,12 +78,12 @@
   height: 38px;
   place-items: center;
   border-radius: 12px;
-  background: var(--green);
+  background: var(--brand-blue);
   color: var(--lime);
 }
 
 .brandAccent {
-  color: #4279a8;
+  color: #d19e42;
 }
 
 .brand small {
@@ -110,7 +110,7 @@
 }
 
 .navigation a:not(.joinButton):hover {
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .joinButton {
@@ -121,7 +121,7 @@
   gap: 12px;
   padding: 0 17px;
   border-radius: 8px;
-  background: var(--green);
+  background: var(--brand-blue);
   color: #fff;
   transition:
     transform 160ms ease,
@@ -130,7 +130,7 @@
 
 .joinButton:hover {
   transform: translateY(-1px);
-  background: var(--green-dark);
+  background: var(--brand-blue-dark);
 }
 
 .menuButton {
@@ -142,7 +142,7 @@
   border: 1px solid var(--line);
   border-radius: 8px;
   background: #fff;
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .hero {
@@ -181,7 +181,7 @@
 
 .hero h1 {
   margin: 22px 0 19px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: clamp(48px, 5.7vw, 72px);
   font-weight: 650;
   letter-spacing: -4.4px;
@@ -260,7 +260,7 @@
   padding: 0 17px;
   border: 0;
   border-radius: 7px;
-  background: var(--green);
+  background: var(--brand-blue);
   color: #fff;
   cursor: pointer;
   font-size: 12px;
@@ -269,7 +269,7 @@
 }
 
 .searchButton:hover {
-  background: var(--green-dark);
+  background: var(--brand-blue-dark);
 }
 
 .filterNotice {
@@ -299,7 +299,7 @@
   border: 2px solid #fff;
   border-radius: 50%;
   background: #d9e2ea;
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 8px;
   font-weight: 800;
 }
@@ -313,7 +313,7 @@
 }
 
 .avatarStack span:nth-child(4) {
-  background: var(--green);
+  background: var(--brand-blue);
   color: #fff;
 }
 
@@ -493,7 +493,7 @@
 }
 
 .artworkPrice {
-  color: var(--green);
+  color: var(--brand-blue);
   font-weight: 750;
 }
 
@@ -594,7 +594,7 @@
 .sectionHeading h2,
 .howIntro h2 {
   margin: 9px 0 0;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 27px;
   font-weight: 650;
   letter-spacing: -1px;
@@ -605,7 +605,7 @@
   display: inline-flex;
   align-items: center;
   gap: 9px;
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 11px;
   font-weight: 700;
 }
@@ -865,7 +865,7 @@
   border: 0;
   border-top: 1px solid #ebedf0;
   background: transparent;
-  color: var(--green);
+  color: var(--brand-blue);
   cursor: pointer;
   font-size: 10px;
   font-weight: 700;
@@ -894,7 +894,7 @@
   border: 1px solid #dce0e5;
   border-radius: 6px;
   background: #fff;
-  color: var(--green);
+  color: var(--brand-blue);
   cursor: pointer;
   font-size: 10px;
   font-weight: 700;
@@ -931,7 +931,7 @@
 
 .emptyState h3 {
   margin: 15px 0 6px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 16px;
   letter-spacing: -0.3px;
 }
@@ -1073,7 +1073,7 @@
 }
 
 .stepNumber {
-  color: #acb6a6;
+  color: #94a3b8;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 1px;
@@ -1116,7 +1116,7 @@
   border-radius: 12px;
   background:
     radial-gradient(ellipse at 75% 120%, #2f426b 0, transparent 45%),
-    var(--green-dark);
+    var(--brand-blue-dark);
   color: #fff;
 }
 
@@ -1277,7 +1277,7 @@
 
 .providerModal h2 {
   margin: 10px 45px 7px 0;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 25px;
   letter-spacing: -0.8px;
 }
@@ -1373,7 +1373,7 @@
   align-items: center;
   gap: 5px;
   margin-top: 5px;
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 10px;
   font-weight: 700;
 }
@@ -1390,7 +1390,7 @@
 
 .servicePrice {
   flex: 0 0 auto;
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 10px;
   font-weight: 750;
 }
@@ -1813,14 +1813,18 @@
 }
 
 .site {
-  --ink: #233654;
-  --muted: #657794;
-  --green: #2860e8;
-  --green-dark: #14294d;
-  --lime: #ff873d;
-  --cream: #f4f7fc;
-  --line: #e2e8f2;
+  --ink: #182b45;
+  --muted: #64748b;
+  --brand-blue: #1769aa;
+  --brand-blue-dark: #123b66;
+  --lime: #e5bb63;
+  --cream: #f5f8fc;
+  --line: #e1e9f2;
+  --white: #fff;
   overflow: clip;
+  background: #f8faff;
+  font-family: inherit;
+  -webkit-font-smoothing: antialiased;
 }
 
 .header {
@@ -1837,13 +1841,13 @@
 }
 
 .brand {
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 25px;
   letter-spacing: -1px;
 }
 
 .brandAccent {
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
 }
 
 .headerActions {
@@ -1880,7 +1884,7 @@
 .heroSecondaryButton {
   border-color: var(--line);
   background: #fff;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
 }
 
 .headerSearchButton,
@@ -1903,8 +1907,8 @@
 
 .providerButton:hover,
 .heroSecondaryButton:hover {
-  border-color: var(--green);
-  color: var(--green);
+  border-color: var(--brand-blue);
+  color: var(--brand-blue);
 }
 
 .navigation {
@@ -1941,7 +1945,7 @@
 
 .eyebrow,
 .sectionKicker {
-  color: var(--green);
+  color: var(--brand-blue);
   font-size: 12px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -1956,7 +1960,7 @@
 
 .hero h1 {
   margin: 18px 0;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: clamp(38px, 4.1vw, 57px);
   font-weight: 600;
   letter-spacing: -2px;
@@ -1964,7 +1968,7 @@
 }
 
 .hero h1 span {
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .heroDescription {
@@ -2020,7 +2024,7 @@
   place-items: center;
   border-radius: 10px;
   background: #edf2ff;
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .imageNote strong,
@@ -2029,7 +2033,7 @@
 }
 
 .imageNote strong {
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 13px;
 }
 
@@ -2061,7 +2065,7 @@
 .searchField {
   min-height: 46px;
   padding: 4px 12px;
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .searchField + .searchField {
@@ -2112,7 +2116,7 @@
 .howHeading h2,
 .audienceCopy h2,
 .benefitsSection h2 {
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: clamp(26px, 2.6vw, 34px);
   letter-spacing: -0.7px;
   line-height: 1.2;
@@ -2151,11 +2155,11 @@
   flex-basis: 43px;
   border-radius: 10px;
   background: #edf2ff;
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .categoryName {
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 14px;
 }
 
@@ -2172,7 +2176,7 @@
 }
 
 .categoryArrow {
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .providerSection {
@@ -2181,7 +2185,7 @@
 }
 
 .providerSection .sectionHeading h2 {
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: clamp(24px, 2.4vw, 31px);
 }
 
@@ -2203,7 +2207,7 @@
 }
 
 .providerLink {
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .howSection {
@@ -2250,13 +2254,13 @@
   margin-right: 12px;
   border-radius: 10px;
   background: #edf2ff;
-  color: var(--green);
+  color: var(--brand-blue);
   vertical-align: middle;
 }
 
 .step h3 {
   margin: 17px 0 7px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 16px;
 }
 
@@ -2339,7 +2343,7 @@
   place-items: center;
   border-radius: 50%;
   background: #e8efff;
-  color: var(--green);
+  color: var(--brand-blue);
   content: "✓";
   font-size: 12px;
   font-weight: 800;
@@ -2358,7 +2362,7 @@
 .benefits article {
   padding: 20px 22px;
   border-left: 1px solid var(--line);
-  color: var(--green);
+  color: var(--brand-blue);
 }
 
 .benefits article:first-child {
@@ -2367,7 +2371,7 @@
 
 .benefits h3 {
   margin: 9px 0 6px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 15px;
 }
 
@@ -2384,7 +2388,7 @@
   justify-content: space-between;
   gap: 24px;
   padding: 42px max(20px, calc((100% - 1160px) / 2));
-  background: var(--green-dark);
+  background: var(--brand-blue-dark);
   color: #fff;
 }
 
@@ -2740,6 +2744,141 @@
   }
 }
 
+.announcement {
+  background: #123b66;
+}
+
+.header {
+  background: rgb(251 252 249 / 92%);
+  box-shadow: 0 4px 20px rgb(18 59 102 / 4%);
+}
+
+.heroImage {
+  border-radius: 22px;
+  box-shadow: 0 22px 55px rgb(18 59 102 / 15%);
+}
+
+.imageNote {
+  border: 1px solid rgb(226 233 227 / 80%);
+  box-shadow: 0 18px 42px rgb(18 59 102 / 12%);
+  animation: noteFloat 5s ease-in-out 1.2s infinite;
+}
+
+.noteIcon,
+.categoryIcon {
+  background: #eaf3fc;
+}
+
+.headerSearchButton,
+.heroPrimaryButton,
+.audienceButton,
+.stepsCta,
+.finalCta > a,
+.searchButton {
+  background: var(--brand-blue);
+  box-shadow: 0 8px 18px rgb(23 105 170 / 17%);
+  transition:
+    transform 180ms ease,
+    background-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.headerSearchButton:hover,
+.heroPrimaryButton:hover,
+.audienceButton:hover,
+.stepsCta:hover,
+.finalCta > a:hover,
+.searchButton:hover {
+  transform: translateY(-2px);
+  background: var(--brand-blue-dark);
+  box-shadow: 0 12px 25px rgb(18 59 102 / 23%);
+}
+
+.providerCard,
+.categoryCard {
+  border-color: var(--line);
+  background: linear-gradient(155deg, #fff 0%, #f7faff 100%);
+  box-shadow: 0 10px 28px rgb(18 59 102 / 6%);
+  transition:
+    transform 220ms cubic-bezier(0.2, 0.75, 0.25, 1),
+    border-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+.providerCard:hover,
+.categoryCard:hover {
+  border-color: #b6d3ed;
+  box-shadow: 0 18px 38px rgb(18 59 102 / 12%);
+}
+
+.searchPanel {
+  border-radius: 18px;
+  box-shadow: 0 16px 42px rgb(18 59 102 / 9%);
+  transition: box-shadow 200ms ease;
+}
+
+.searchPanel:focus-within {
+  box-shadow: 0 18px 46px rgb(18 59 102 / 13%), 0 0 0 3px rgb(23 105 170 / 10%);
+}
+
+.filterNotice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.filterNotice button {
+  flex: 0 0 auto;
+  padding: 7px 11px;
+  border: 1px solid #d9e5f2;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--brand-blue-dark);
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.filterNotice button:hover {
+  background: #edf5ee;
+}
+
+.modalBackdrop {
+  animation: backdropIn 180ms ease both;
+}
+
+.providerModal {
+  border-color: #e1e9f2;
+  border-radius: 22px;
+  animation: modalIn 240ms cubic-bezier(0.2, 0.8, 0.25, 1) both;
+}
+
+@keyframes noteFloat {
+  0%,
+  100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .imageNote,
+  .modalBackdrop,
+  .providerModal {
+    animation: none;
+  }
+}
+
 @media (max-width: 420px) {
   .headerSearchButton {
     min-height: 40px;
@@ -2802,7 +2941,7 @@
   padding: 7px 0;
   border: 0;
   background: transparent;
-  color: var(--green);
+  color: var(--brand-blue);
   cursor: pointer;
   font: inherit;
   font-size: 12px;
@@ -2862,7 +3001,7 @@
 
 .providerCard h3 {
   margin-top: 18px;
-  color: var(--green-dark);
+  color: var(--brand-blue-dark);
   font-size: 18px;
 }
 
@@ -2897,7 +3036,7 @@
 .providerLink {
   margin-top: auto;
   padding-top: 16px;
-  border-color: #e9eff6;
+  border-color: #e1e9f2;
   font-size: 12px;
 }
 
@@ -2938,5 +3077,135 @@
   .pagination > div {
     width: 100%;
     justify-content: space-between;
+  }
+}
+
+/* Conect brand and marketplace palette */
+.site {
+  --ink: #182b45;
+  --muted: #64748b;
+  --brand-blue: #1769aa;
+  --brand-blue-dark: #123b66;
+  --lime: #e5bb63;
+  --cream: #f5f8fc;
+  --line: #e1e9f2;
+  color: var(--ink);
+  background: #f8faff;
+}
+
+.site a {
+  text-decoration: none;
+}
+
+.brand {
+  gap: 10px;
+  color: var(--brand-blue-dark);
+  text-decoration: none;
+}
+
+.brandMark {
+  width: 40px;
+  height: 40px;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #1769aa, #123b66);
+  box-shadow: 0 6px 15px rgb(18 59 102 / 18%);
+  color: #f1d68d;
+  font-size: 19px;
+}
+
+.brandName {
+  color: #123b66;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.9px;
+  line-height: 0.9;
+}
+
+.brandName small {
+  margin-top: 4px;
+  color: #849189;
+  font-size: 8px;
+  letter-spacing: 2.2px;
+}
+
+.brandAccent {
+  color: #d19e42;
+}
+
+.announcement {
+  color: #f2f5ef;
+}
+
+.announcement a {
+  color: #f1d68d;
+}
+
+.navigation {
+  color: #53645a;
+}
+
+.providerCta {
+  background:
+    radial-gradient(ellipse at 75% 120%, #1769aa 0, transparent 45%),
+    var(--brand-blue-dark);
+}
+
+.ctaKicker {
+  color: #e5bb86;
+}
+
+.providerCta p,
+.finalCta p {
+  color: #d0deef;
+}
+
+.providerCta > a {
+  color: #233d58;
+}
+
+.footer {
+  background: #123b66;
+}
+
+.footerGrid p,
+.copyright {
+  color: #c0d0df;
+}
+
+.activeFilter {
+  border-color: #d9e5f2;
+  background: #eef5fc;
+  color: #45637f;
+}
+
+.clearFiltersButton:focus-visible,
+.providerLink:focus-visible,
+.pagination button:focus-visible,
+.emptyState button:focus-visible {
+  outline-color: rgb(23 105 170 / 42%);
+}
+
+.providerCard {
+  background: linear-gradient(180deg, #fff 0%, #f7faff 100%);
+  box-shadow: 0 8px 25px rgb(18 59 102 / 5%);
+}
+
+.providerCard:hover {
+  border-color: #b6d3ed;
+  box-shadow: 0 18px 36px rgb(18 59 102 / 11%);
+}
+
+.providerAvatar {
+  box-shadow: 0 0 0 1px #d9e5f2, 0 5px 13px rgb(18 59 102 / 8%);
+}
+
+.providerLink {
+  border-color: #e1e9f2;
+}
+
+@media (max-width: 850px) {
+  .brandMark {
+    width: 36px;
+    height: 36px;
   }
 }

@@ -4,16 +4,13 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { requisitarJson } from "@/lib/api-client";
 import EstruturaAutenticacao from "../../auth-shell";
 import styles from "../../auth.module.css";
 
 type ApiPage<T> = { results: T[] };
 type Category = { id: number; name: string; parent: number | null };
 type Municipality = { id: number; name: string; province: number };
-
-const URL_BASE_API =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:8000/api/v1";
 
 function obterMensagemErro(dadosRecebidos: unknown) {
   if (dadosRecebidos && typeof dadosRecebidos === "object") {
@@ -48,23 +45,10 @@ export default function PaginaNovoPedido() {
   useEffect(() => {
     let ativo = true;
     Promise.all([
-      fetch(`${URL_BASE_API}/categories/?parent=null`, {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      }),
-      fetch(`${URL_BASE_API}/municipalities/`, {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      }),
+      requisitarJson<ApiPage<Category>>("/api/public/categories/?parent=null"),
+      requisitarJson<ApiPage<Municipality>>("/api/public/municipalities/"),
     ])
-      .then(async ([respostaCategorias, respostaMunicipios]) => {
-        if (!respostaCategorias.ok || !respostaMunicipios.ok) {
-          throw new Error("Não foi possível carregar categorias e municípios.");
-        }
-        const [paginaCategorias, paginaMunicipios] = (await Promise.all([
-          respostaCategorias.json(),
-          respostaMunicipios.json(),
-        ])) as [ApiPage<Category>, ApiPage<Municipality>];
+      .then(([paginaCategorias, paginaMunicipios]) => {
         if (ativo) {
           definirCategorias(paginaCategorias.results);
           definirMunicipios(paginaMunicipios.results);

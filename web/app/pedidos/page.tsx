@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { ApiRequestError, requisitarJson } from "@/lib/api-client";
 import EstruturaAutenticacao from "../auth-shell";
 import styles from "../auth.module.css";
 
@@ -39,10 +40,6 @@ type Proposal = {
 type Category = { id: number; name: string };
 type ApiPage<T> = { count: number; results: T[] };
 
-const URL_BASE_API =
-  process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
-  "http://localhost:8000/api/v1";
-
 const nomesEstados: Record<string, string> = {
   OPEN: "Aberto",
   NEGOTIATING: "A receber propostas",
@@ -78,26 +75,24 @@ export default function PaginaPedidos() {
   const [estaCarregando, definirCarregamento] = useState(true);
   const [acaoProposta, definirAcaoProposta] = useState<number | null>(null);
   const [erroDaProposta, definirErroDaProposta] = useState("");
+  const [conversaAabrir, definirConversaAabrir] = useState<number | null>(null);
+  const [erroDaConversa, definirErroDaConversa] = useState("");
 
   useEffect(() => {
     let ativo = true;
     Promise.all([
       fetch("/api/auth/orders/", { cache: "no-store" }),
       fetch("/api/auth/proposals/", { cache: "no-store" }),
-      fetch(`${URL_BASE_API}/categories/?parent=null`, {
-        headers: { Accept: "application/json" },
-        cache: "no-store",
-      }),
+      requisitarJson<ApiPage<Category>>("/api/public/categories/?parent=null"),
     ])
-      .then(async ([respostaPedidos, respostaPropostas, respostaCategorias]) => {
+      .then(async ([respostaPedidos, respostaPropostas, paginaCategorias]) => {
         if (respostaPedidos.status === 401 || respostaPropostas.status === 401) {
           navegador.replace("/entrar?next=%2Fpedidos");
           return;
         }
         if (
           !respostaPedidos.ok ||
-          !respostaPropostas.ok ||
-          !respostaCategorias.ok
+          !respostaPropostas.ok
         ) {
           const dadosRecebidos = await respostaPedidos.json().catch(() => null);
           throw new Error(
@@ -106,11 +101,10 @@ export default function PaginaPedidos() {
               : "Não foi possível carregar os pedidos.",
           );
         }
-        const [orderPage, paginaPropostas, paginaCategorias] = (await Promise.all([
+        const [orderPage, paginaPropostas] = (await Promise.all([
           respostaPedidos.json(),
           respostaPropostas.json(),
-          respostaCategorias.json(),
-        ])) as [ApiPage<Order>, ApiPage<Proposal>, ApiPage<Category>];
+        ])) as [ApiPage<Order>, ApiPage<Proposal>];
         if (ativo) {
           definirPedidos(orderPage.results);
           definirPropostas(paginaPropostas.results);
@@ -188,6 +182,29 @@ export default function PaginaPedidos() {
     }
   }
 
+  async function abrirConversa(proposta: Proposal) {
+    definirConversaAabrir(proposta.id);
+    definirErroDaConversa("");
+    try {
+      const conversa = await requisitarJson<{ id: number }>("/api/auth/conversations/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proposal_id: proposta.id }),
+      });
+      navegador.push(`/mensagens?conversa=${conversa.id}`);
+    } catch (motivo) {
+      if (motivo instanceof ApiRequestError && motivo.status === 401) {
+        navegador.replace("/entrar?next=%2Fpedidos");
+      } else {
+        definirErroDaConversa(
+          motivo instanceof Error ? motivo.message : "Não foi possível abrir a conversa.",
+        );
+      }
+    } finally {
+      definirConversaAabrir(null);
+    }
+  }
+
   return (
     <EstruturaAutenticacao account>
       <p className={styles.eyebrow}>Acompanhamento</p>
@@ -243,6 +260,11 @@ export default function PaginaPedidos() {
               {propostas.some((proposta) => proposta.order_id === pedido.id) && (
                 <section className={styles.proposalSection}>
                   <h3>Propostas recebidas</h3>
+                    {erroDaConversa && (
+                      <p className={styles.notice} role="alert">
+                        {erroDaConversa}
+                      </p>
+                    )}
                   {erroDaProposta && (
                     <p className={styles.notice} role="alert">
                       {erroDaProposta}
@@ -303,6 +325,21 @@ export default function PaginaPedidos() {
                                 }
                               >
                                 Rejeitar
+                              </button>
+                            </div>
+                          )}
+                        {["PENDING", "ACCEPTED"].includes(proposta.status) &&
+                          pedido.status !== "CANCELLED" && (
+                            <div className={styles.accountActions}>
+                              <button
+                                className={styles.secondary}
+                                type="button"
+                                disabled={conversaAabrir === proposta.id}
+                                onClick={() => void abrirConversa(proposta)}
+                              >
+                                {conversaAabrir === proposta.id
+                                  ? "A abrir…"
+                                  : "Conversar sobre a proposta"}
                               </button>
                             </div>
                           )}

@@ -26,6 +26,8 @@ if DATABASE_ENGINE != "django.db.backends.postgresql":
 
 if not REDIS_URL:
     raise ImproperlyConfigured("REDIS_URL must be set in production.")
+if not os.environ.get("WEB_APP_URL"):
+    raise ImproperlyConfigured("WEB_APP_URL must be set for account email links.")
 
 for setting_name in (
     "AWS_STORAGE_BUCKET_NAME",
@@ -67,13 +69,12 @@ for setting_name in (
 ):
     if not os.environ.get(setting_name):
         raise ImproperlyConfigured(f"{setting_name} must be set in production.")
-if EMAIL_NOTIFICATIONS_ENABLED and not os.environ.get("DEFAULT_FROM_EMAIL"):
+if not os.environ.get("DEFAULT_FROM_EMAIL"):
     raise ImproperlyConfigured(
-        "DEFAULT_FROM_EMAIL must be set when email notifications are enabled."
+        "DEFAULT_FROM_EMAIL must be set for account emails."
     )
 if (
-    EMAIL_NOTIFICATIONS_ENABLED
-    and EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
+    EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend"
 ):
     for setting_name in (
         "EMAIL_HOST",
@@ -82,7 +83,7 @@ if (
     ):
         if not os.environ.get(setting_name):
             raise ImproperlyConfigured(
-                f"{setting_name} must be set when using SMTP notifications in production."
+                f"{setting_name} must be set when using SMTP for account emails."
             )
 if EMAIL_USE_TLS and EMAIL_USE_SSL:
     raise ImproperlyConfigured("EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be enabled.")

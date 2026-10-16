@@ -35,9 +35,15 @@ class RegistrationSerializer(serializers.Serializer):
         return atributos
 
     def create(self, dados_validados):
+        self.created_new_user = False
         try:
             with transaction.atomic():
-                return User.objects.create_user(**dados_validados)
+                utilizador = User.objects.create_user(
+                    **dados_validados,
+                    email_verified=False,
+                )
+                self.created_new_user = True
+                return utilizador
         except IntegrityError:
             email_exists = User.objects.filter(
                 email=dados_validados["email"]

@@ -60,8 +60,8 @@ export default function PaginaRegistar() {
           : "Conta criada. Já podes iniciar sessão.";
       setSuccess(
         typeof detalhe === "string"
-          ? `${detalhe} Entra com o email e a palavra-passe que escolheste.`
-          : "Conta criada. Já podes iniciar sessão.",
+          ? `${detalhe} Confirma o email antes de iniciar sessão.`
+          : "Se os dados forem válidos, enviámos instruções para confirmar o email.",
       );
       definirPalavraPasse("");
       setConfirmation("");

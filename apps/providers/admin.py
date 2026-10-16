@@ -1,13 +1,19 @@
 from django.contrib import admin
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html
 
-from .models import Provider, ProviderVerificationDocument
+from .models import (
+    Provider,
+    ProviderVerificationAuditEvent,
+    ProviderVerificationDocument,
+)
+from .services import registar_transicao_verificacao
 
 
 @admin.register(Provider)
@@ -51,7 +57,13 @@ class ProviderAdmin(admin.ModelAdmin):
         ("Datas", {"fields": ("created_at", "updated_at")}),
     )
 
+    @transaction.atomic
     def save_model(self, request, objeto, form, change):
+        estado_anterior = (
+            Provider.objects.filter(pk=objeto.pk)
+            .values_list("verification_status", flat=True)
+            .first()
+        )
         if objeto.verification_status == Provider.VerificationStatus.VERIFIED:
             if objeto.verified_at is None:
                 objeto.verified_at = timezone.now()
@@ -59,12 +71,19 @@ class ProviderAdmin(admin.ModelAdmin):
         else:
             objeto.verified_at = None
         super().save_model(request, objeto, form, change)
+        registar_transicao_verificacao(
+            provider=objeto,
+            actor=request.user,
+            previous_status=estado_anterior,
+        )
 
     @admin.action(description="Aprovar candidaturas selecionadas")
+    @transaction.atomic
     def aprovar_candidaturas(self, request, queryset):
         agora = timezone.now()
         atualizadas = 0
         for prestador in queryset:
+            estado_anterior = prestador.verification_status
             prestador.verification_status = Provider.VerificationStatus.VERIFIED
             prestador.verified_at = agora
             prestador.verification_feedback = ""
@@ -76,6 +95,11 @@ class ProviderAdmin(admin.ModelAdmin):
                     "updated_at",
                 )
             )
+            registar_transicao_verificacao(
+                provider=prestador,
+                actor=request.user,
+                previous_status=estado_anterior,
+            )
             atualizadas += 1
         self.message_user(
             request,
@@ -84,9 +108,11 @@ class ProviderAdmin(admin.ModelAdmin):
         )
 
     @admin.action(description="Rejeitar candidaturas selecionadas")
+    @transaction.atomic
     def rejeitar_candidaturas(self, request, queryset):
         atualizadas = 0
         for prestador in queryset:
+            estado_anterior = prestador.verification_status
             prestador.verification_status = Provider.VerificationStatus.REJECTED
             prestador.verified_at = None
             prestador.verification_feedback = (
@@ -100,6 +126,11 @@ class ProviderAdmin(admin.ModelAdmin):
                     "verification_feedback",
                     "updated_at",
                 )
+            )
+            registar_transicao_verificacao(
+                provider=prestador,
+                actor=request.user,
+                previous_status=estado_anterior,
             )
             atualizadas += 1
         self.message_user(
@@ -163,3 +194,38 @@ class ProviderVerificationDocumentAdmin(admin.ModelAdmin):
         resposta["X-Content-Type-Options"] = "nosniff"
         resposta["Cache-Control"] = "private, no-store"
         return resposta
+
+
+@admin.register(ProviderVerificationAuditEvent)
+class ProviderVerificationAuditEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "provider_name_snapshot",
+        "previous_status",
+        "new_status",
+        "actor",
+        "created_at",
+    )
+    list_filter = ("new_status", "created_at")
+    search_fields = (
+        "provider_name_snapshot",
+        "provider__user__email",
+        "actor__email",
+    )
+    readonly_fields = (
+        "actor",
+        "provider",
+        "provider_name_snapshot",
+        "previous_status",
+        "new_status",
+        "feedback_snapshot",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

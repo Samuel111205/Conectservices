@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 export const COOKIE_ACESSO = "conect_access";
 export const COOKIE_ATUALIZACAO = "conect_refresh";
+export const COOKIE_SESSAO = "conect_session";
 export const IDADE_MAXIMA_TOKEN_ACESSO = 15 * 60;
 export const IDADE_MAXIMA_TOKEN_ATUALIZACAO = 7 * 24 * 60 * 60;
 
@@ -10,11 +11,11 @@ export const URL_BASE_API =
   process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ??
   "http://localhost:8000/api/v1";
 
-const opcoesCookie = (idadeMaxima: number) => ({
+const opcoesCookie = (idadeMaxima: number, path = "/api/auth") => ({
   httpOnly: true,
   secure: process.env.NODE_ENV === "production",
   sameSite: "lax" as const,
-  path: "/api/auth",
+  path,
   maxAge: idadeMaxima,
 });
 
@@ -29,11 +30,17 @@ export function definirCookiesSessao(
     tokenAtualizacao,
     opcoesCookie(IDADE_MAXIMA_TOKEN_ATUALIZACAO),
   );
+  respostaHttp.cookies.set(
+    COOKIE_SESSAO,
+    "1",
+    opcoesCookie(IDADE_MAXIMA_TOKEN_ATUALIZACAO, "/"),
+  );
 }
 
 export function limparCookiesSessao(respostaHttp: NextResponse) {
   respostaHttp.cookies.set(COOKIE_ACESSO, "", { ...opcoesCookie(0), maxAge: 0 });
   respostaHttp.cookies.set(COOKIE_ATUALIZACAO, "", { ...opcoesCookie(0), maxAge: 0 });
+  respostaHttp.cookies.set(COOKIE_SESSAO, "", { ...opcoesCookie(0, "/"), maxAge: 0 });
 }
 
 export async function encaminharRespostaApi(respostaHttp: Response) {

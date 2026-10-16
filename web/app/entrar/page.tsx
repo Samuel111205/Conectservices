@@ -7,15 +7,23 @@ import type { FormEvent } from "react";
 import EstruturaAutenticacao from "../auth-shell";
 import styles from "../auth.module.css";
 
-function obterMensagemErro(dadosRecebidos: unknown) {
-  if (dadosRecebidos && typeof dadosRecebidos === "object") {
-    const campos = Object.values(dadosRecebidos).flatMap((valor) =>
-      Array.isArray(valor) ? valor : [valor],
-    );
-    const mensagem = campos.find((valor) => typeof valor === "string");
-    if (typeof mensagem === "string") return mensagem;
+function obterMensagemErro(dadosRecebidos: unknown): string | null {
+  if (typeof dadosRecebidos === "string" && dadosRecebidos.trim()) return dadosRecebidos;
+  if (Array.isArray(dadosRecebidos)) {
+    for (const valor of dadosRecebidos) {
+      const mensagem = obterMensagemErro(valor);
+      if (mensagem) return mensagem;
+    }
   }
-  return "Não foi possível iniciar sessão. Confirma os teus dados e tenta novamente.";
+  if (dadosRecebidos && typeof dadosRecebidos === "object") {
+    const registo = dadosRecebidos as Record<string, unknown>;
+    if (typeof registo.detail === "string") return registo.detail;
+    for (const valor of Object.values(registo)) {
+      const mensagem = obterMensagemErro(valor);
+      if (mensagem) return mensagem;
+    }
+  }
+  return null;
 }
 
 export default function PaginaEntrar() {
@@ -34,25 +42,29 @@ export default function PaginaEntrar() {
       const respostaHttp = await fetch("/api/auth/token/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: correioEletronico, password: palavraPasse }),
+        body: JSON.stringify({ email: correioEletronico.trim().toLocaleLowerCase("pt-AO"), password: palavraPasse }),
       });
-      const dadosRecebidos: unknown = await respostaHttp.json();
+      const dadosRecebidos: unknown = await respostaHttp.json().catch(() => null);
 
       if (!respostaHttp.ok) {
-        definirErro(obterMensagemErro(dadosRecebidos));
+        definirErro(obterMensagemErro(dadosRecebidos) ?? "Não foi possível iniciar sessão. Confirma os teus dados e tenta novamente.");
         return;
       }
 
       const destinoSeguinte = new URLSearchParams(window.location.search).get("next");
-      let destino = "/conta";
+      let destino = "/";
       if (destinoSeguinte) {
         try {
           const destinoInterno = new URL(destinoSeguinte, window.location.origin);
-          if (destinoInterno.origin === window.location.origin) {
+          const rotasAutenticacao = ["/entrar", "/registar", "/recuperar-acesso", "/redefinir-palavra-passe"];
+          if (
+            destinoInterno.origin === window.location.origin &&
+            !rotasAutenticacao.includes(destinoInterno.pathname)
+          ) {
             destino = `${destinoInterno.pathname}${destinoInterno.search}${destinoInterno.hash}`;
           }
         } catch {
-          destino = "/conta";
+          destino = "/";
         }
       }
       navegador.replace(destino);
@@ -78,6 +90,7 @@ export default function PaginaEntrar() {
             name="email"
             autoComplete="email"
             required
+            aria-invalid={Boolean(erro)}
             value={correioEletronico}
             onChange={(evento) => definirCorreioEletronico(evento.target.value)}
           />
@@ -102,6 +115,9 @@ export default function PaginaEntrar() {
           {estaAEnviar ? "A entrar…" : "Entrar"}
         </button>
       </form>
+      <p className={styles.switch}>
+        <Link href="/recuperar-acesso">Esqueceste-te da palavra-passe?</Link>
+      </p>
       <p className={styles.switch}>
         Ainda não tens conta? <Link href="/registar">Criar conta</Link>
       </p>

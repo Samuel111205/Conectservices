@@ -4,6 +4,7 @@ from .views import (
     CurrentProviderView,
     ProviderCreateView,
     ProviderDiscoveryView,
+    ProviderPublicDetailView,
     ProviderVerificationDocumentDeleteView,
     ProviderVerificationDocumentListCreateView,
     SubmitProviderVerificationView,
@@ -11,6 +12,7 @@ from .views import (
 
 urlpatterns = [
     path("discover/", ProviderDiscoveryView.as_view(), name="provider-discover"),
+    path("<int:pk>/", ProviderPublicDetailView.as_view(), name="provider-public-detail"),
     path(
         "me/verification-documents/",
         ProviderVerificationDocumentListCreateView.as_view(),

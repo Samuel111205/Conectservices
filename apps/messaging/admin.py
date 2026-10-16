@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 
 from .email import enviar_email_notificacao
-from .models import Conversation, Message, Notification
+from .models import Conversation, Message, Notification, PushDeviceToken
 
 
 @admin.action(description="Reenviar emails de notificação falhados")
@@ -116,4 +116,18 @@ class NotificationAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, objeto=None):
+        return False
+
+
+@admin.register(PushDeviceToken)
+class PushDeviceTokenAdmin(admin.ModelAdmin):
+    list_display = ("user", "platform", "is_active", "updated_at")
+    list_filter = ("platform", "is_active")
+    search_fields = ("user__email", "token")
+    readonly_fields = ("user", "token", "platform", "created_at", "updated_at")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, objeto=None):
         return False

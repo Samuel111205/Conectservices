@@ -1,5 +1,6 @@
+import json
 from smtplib import SMTPException
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from django.contrib.auth import get_user_model
 from django.core import mail
@@ -12,7 +13,7 @@ from rest_framework.test import APITestCase
 from apps.catalog.models import Category
 from apps.locations.models import Municipality, Province
 from apps.messaging.admin import retry_notification_emails
-from apps.messaging.models import Conversation, Message, Notification
+from apps.messaging.models import Conversation, Message, Notification, PushDeviceToken
 from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
@@ -384,3 +385,81 @@ class MessagingApiTests(APITestCase):
             self.client.get(reverse("notification-unread-count")).data["unread_count"],
             0,
         )
+
+    def test__push_token_registration_requires_auth_and_is_idempotent(self):
+        endpoint = reverse("push-token-list")
+        token = "ExponentPushToken[device_123]"
+
+        anonymous = self.client.post(
+            endpoint,
+            {"token": token, "platform": "ANDROID"},
+        )
+        self.client.force_authenticate(self.client_user)
+        first = self.client.post(endpoint, {"token": token, "platform": "ANDROID"})
+        second = self.client.post(endpoint, {"token": token, "platform": "ANDROID"})
+        invalid = self.client.post(
+            endpoint,
+            {"token": "not-a-push-token", "platform": "ANDROID"},
+        )
+
+        self.assertEqual(anonymous.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(first.status_code, status.HTTP_200_OK)
+        self.assertEqual(second.status_code, status.HTTP_200_OK)
+        self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(PushDeviceToken.objects.filter(user=self.client_user).count(), 1)
+
+    def test__push_token_deactivation_is_scoped_to_authenticated_owner(self):
+        dispositivo = PushDeviceToken.objects.create(
+            user=self.client_user,
+            token="ExponentPushToken[device_456]",
+            platform=PushDeviceToken.Platform.ANDROID,
+        )
+        endpoint = reverse("push-token-deactivate")
+        self.client.force_authenticate(self.outsider)
+        other_user = self.client.post(endpoint, {"token": dispositivo.token})
+        self.client.force_authenticate(self.client_user)
+        owner = self.client.post(endpoint, {"token": dispositivo.token})
+        dispositivo.refresh_from_db()
+
+        self.assertEqual(other_user.status_code, status.HTTP_200_OK)
+        self.assertFalse(other_user.data["deactivated"])
+        self.assertTrue(owner.data["deactivated"])
+        self.assertFalse(dispositivo.is_active)
+
+    @override_settings(PUSH_NOTIFICATIONS_ENABLED=True)
+    def test__push_usa_aviso_generico_e_nao_expoe_corpo_da_mensagem(self):
+        from apps.messaging.services import enviar_push_notification
+
+        conversa = self.abrir_conversa(self.provider_user)
+        mensagem = Message.objects.create(
+            conversation=conversa,
+            sender=self.provider_user,
+            body="Detalhe confidencial do cliente.",
+        )
+        notificacao = Notification.objects.create(
+            recipient=self.client_user,
+            actor=self.provider_user,
+            conversation=conversa,
+            message=mensagem,
+            kind=Notification.Kind.MESSAGE,
+            title="Nova mensagem",
+            body=mensagem.body,
+        )
+        PushDeviceToken.objects.create(
+            user=self.client_user,
+            token="ExponentPushToken[device_789]",
+            platform=PushDeviceToken.Platform.ANDROID,
+        )
+        response = MagicMock()
+        response.read.return_value = json.dumps(
+            {"data": [{"status": "ok", "id": "ticket-1"}]}
+        ).encode("utf-8")
+        response.__enter__.return_value = response
+
+        with patch("apps.messaging.services.urlopen", return_value=response) as send:
+            delivered = enviar_push_notification(notification_id=notificacao.pk)
+
+        push_payload = json.loads(send.call_args.args[0].data)
+        self.assertTrue(delivered)
+        self.assertEqual(push_payload[0]["body"], "Tens uma nova mensagem sobre um serviço.")
+        self.assertNotIn("Detalhe confidencial", json.dumps(push_payload))

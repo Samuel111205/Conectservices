@@ -70,6 +70,7 @@ export default function PaginaOportunidadesPrestador() {
   const [precos, definirPrecos] = useState<Record<number, string>>({});
   const [descricoes, definirDescricoes] = useState<Record<number, string>>({});
   const [prazos, definirPrazos] = useState<Record<number, string>>({});
+  const [conversaAabrir, definirConversaAabrir] = useState<number | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -160,6 +161,40 @@ export default function PaginaOportunidadesPrestador() {
     }
   }
 
+  async function abrirConversa(proposta: Proposal) {
+    definirConversaAabrir(proposta.id);
+    definirErrosFormulario((atual) => ({ ...atual, [proposta.order_id]: "" }));
+    try {
+      const respostaHttp = await fetch("/api/auth/conversations/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ proposal_id: proposta.id }),
+      });
+      const dados = await respostaHttp.json().catch(() => null);
+      if (respostaHttp.status === 401) {
+        navegador.replace("/entrar?next=%2Fprestador%2Fpedidos");
+        return;
+      }
+      if (!respostaHttp.ok || typeof dados?.id !== "number") {
+        definirErrosFormulario((atual) => ({
+          ...atual,
+          [proposta.order_id]: typeof dados?.detail === "string"
+            ? dados.detail
+            : "Não foi possível abrir a conversa.",
+        }));
+        return;
+      }
+      navegador.push(`/mensagens?conversa=${dados.id}`);
+    } catch {
+      definirErrosFormulario((atual) => ({
+        ...atual,
+        [proposta.order_id]: "Não foi possível contactar o serviço.",
+      }));
+    } finally {
+      definirConversaAabrir(null);
+    }
+  }
+
   const propostaDoPedido = (idPedido: number) =>
     propostas.find(
       (proposta) =>
@@ -239,6 +274,18 @@ export default function PaginaOportunidadesPrestador() {
                         ? "Pendente"
                         : proposta.status}
                     </span>
+                    {["PENDING", "ACCEPTED"].includes(proposta.status) && (
+                      <button
+                        className={styles.secondary}
+                        type="button"
+                        disabled={conversaAabrir === proposta.id}
+                        onClick={() => void abrirConversa(proposta)}
+                      >
+                        {conversaAabrir === proposta.id
+                          ? "A abrir…"
+                          : "Conversar com o cliente"}
+                      </button>
+                    )}
                   </div>
                 ) : (
                   <form

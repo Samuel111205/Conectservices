@@ -32,6 +32,7 @@ export async function POST(requisicao: Request) {
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(dadosRecebidos),
       cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
     });
   } catch (erro) {
     console.error("Falha ao contactar a API para iniciar sessão.", erro);

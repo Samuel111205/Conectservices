@@ -27,6 +27,7 @@ export async function POST(requisicao: Request) {
       headers: { Accept: "application/json", "Content-Type": "application/json" },
       body: JSON.stringify(dadosRecebidos),
       cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
     });
     return encaminharRespostaApi(respostaExterna);
   } catch (erro) {

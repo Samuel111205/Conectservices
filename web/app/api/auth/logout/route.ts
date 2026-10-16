@@ -30,6 +30,7 @@ export async function POST(requisicao: Request) {
         },
         body: JSON.stringify({ refresh: tokenAtualizacao }),
         cache: "no-store",
+        signal: AbortSignal.timeout(12_000),
       });
       respostaHttp = new NextResponse(null, {
         status: respostaExterna.status,

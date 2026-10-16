@@ -60,6 +60,7 @@ export async function encaminharPedidoAutenticado(
       },
       ...(corpoRequisicao !== undefined ? { body: corpoRequisicao } : {}),
       cache: "no-store",
+      signal: AbortSignal.timeout(12_000),
     });
 
   try {
@@ -72,6 +73,7 @@ export async function encaminharPedidoAutenticado(
         headers: { Accept: "application/json", "Content-Type": "application/json" },
         body: JSON.stringify({ refresh: tokenAtualizacao }),
         cache: "no-store",
+        signal: AbortSignal.timeout(12_000),
       });
 
       if (!respostaAtualizacao.ok) {

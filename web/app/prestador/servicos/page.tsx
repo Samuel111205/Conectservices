@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
+import { requisitarJson } from "@/lib/api-client";
 import EstruturaAutenticacao from "../../auth-shell";
 import styles from "../../auth.module.css";
 
@@ -84,31 +85,26 @@ export default function PaginaServicosPrestador() {
     Promise.all([
       fetch("/api/auth/services/", { cache: "no-store" }),
       fetch("/api/auth/providers/me/", { cache: "no-store" }),
-      fetch(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "") ?? "http://localhost:8000/api/v1"}/categories/?parent=null`,
-        { headers: { Accept: "application/json" }, cache: "no-store" },
-      ),
+      requisitarJson<ApiPage<Category>>("/api/public/categories/?parent=null"),
     ])
-      .then(async ([respostaServicos, respostaPrestador, respostaCategorias]) => {
+      .then(async ([respostaServicos, respostaPrestador, paginaCategorias]) => {
         if (respostaServicos.status === 401 || respostaPrestador.status === 401) {
           navegador.replace("/entrar?next=%2Fprestador%2Fservicos");
           return;
         }
         if (
           !respostaServicos.ok ||
-          (!respostaPrestador.ok && respostaPrestador.status !== 404) ||
-          !respostaCategorias.ok
+          (!respostaPrestador.ok && respostaPrestador.status !== 404)
         ) {
           throw new Error("Não foi possível carregar os serviços e categorias.");
         }
-        const [paginaServicos, dadosPrestador, paginaCategorias] =
+        const [paginaServicos, dadosPrestador] =
           (await Promise.all([
             respostaServicos.json(),
             respostaPrestador.status === 404
               ? Promise.resolve(null)
               : respostaPrestador.json(),
-            respostaCategorias.json(),
-          ])) as [ApiPage<Service>, Provider | null, ApiPage<Category>];
+          ])) as [ApiPage<Service>, Provider | null];
         if (!mounted) return;
         definirServicos(paginaServicos.results);
         definirPrestador(dadosPrestador);
@@ -147,7 +143,11 @@ export default function PaginaServicosPrestador() {
     definirPrecoMaximo(servico.maximum_price ?? "");
     definirDuracao(servico.duration_minutes ? String(servico.duration_minutes) : "");
     definirAtivo(servico.is_active);
-    document.getElementById("formulario-servico")?.scrollIntoView({ behavior: "smooth" });
+    document.getElementById("formulario-servico")?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth",
+    });
   }
 
   function limparFormulario() {

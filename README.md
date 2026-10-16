@@ -1,17 +1,17 @@
 # Conect Services
 
 Plataforma de marketplace de serviços inicialmente direcionada para Angola.
-O backend será a fonte das regras de negócio, consumido pela aplicação Web e,
-posteriormente, pelas aplicações Android e iOS através da mesma API.
+O backend é a fonte das regras de negócio, consumido pelas aplicações Web e
+Mobile através da mesma API.
 
 ## Arquitetura inicial
 
 - Monólito modular Django com Django REST Framework.
 - API REST versionada em `/api/v1/`.
 - SQLite para desenvolvimento local e PostgreSQL para produção.
-- Redis está disponível no Compose e armazena o cache partilhado usado por
-  rate limiting; Celery será integrado quando existirem tarefas assíncronas.
-- Next.js e React Native serão clientes da API, sem lógica de negócio duplicada.
+- Redis armazena o cache partilhado e serve de broker Celery para notificações
+  e emails processados em segundo plano.
+- Next.js e React Native são clientes da API, sem lógica de negócio duplicada.
 
 ## Requisitos
 
@@ -84,6 +84,57 @@ Opcionalmente, define `API_BASE_URL` em `web/.env.local` para especificar o
 endereço da API apenas no servidor. Caso contrário, as rotas servidoras também
 usam `NEXT_PUBLIC_API_BASE_URL`.
 
+## Aplicação Mobile
+
+A app Mobile usa React Native, Expo Router e TypeScript. Permite pesquisar
+prestadores públicos, criar conta, iniciar sessão, publicar e acompanhar os
+próprios pedidos e terminar sessão. Os pedidos usam os endpoints
+existentes em `/api/v1/`; tokens de acesso e renovação ficam no armazenamento
+seguro do dispositivo, e os tokens de renovação são rotacionados pela API.
+
+```powershell
+Set-Location .\mobile
+Copy-Item .env.example .env.local
+npm install
+npm run start
+```
+
+Configura `EXPO_PUBLIC_API_BASE_URL` em `mobile/.env.local`. No Android
+Emulator, usa normalmente `http://10.0.2.2:8000/api/v1`; num telemóvel físico,
+usa o endereço IP local do computador e permite a ligação na rede. A API tem
+de ouvir em `0.0.0.0:8000`, e o endereço usado pelo dispositivo deve estar em
+`DJANGO_ALLOWED_HOSTS`. Para desenvolvimento local fora do Docker, por exemplo:
+
+```powershell
+$env:DJANGO_ALLOWED_HOSTS="localhost,127.0.0.1,10.0.2.2"
+python manage.py runserver 0.0.0.0:8000
+```
+
+Ao usar Docker Compose, define `DJANGO_ALLOWED_HOSTS` no ambiente antes de
+iniciar os serviços. Para abrir a app, usa Expo Go ou um emulador Android;
+compilar para iOS requer macOS com Xcode ou um serviço de build remoto.
+
+As notificações push são registadas na API quando o utilizador as ativa em
+**A minha conta**. Para emitir notificações, define
+`PUSH_NOTIFICATIONS_ENABLED=true` no backend. A app precisa de
+`EXPO_PUBLIC_EAS_PROJECT_ID` e de uma development build com credenciais
+Android/iOS; o Expo Go não suporta notificações push remotas desde o SDK 53.
+O texto da mensagem privada nunca é incluído no aviso visível.
+
+As contas criadas pela aplicação não podem iniciar sessão até à confirmação do email.
+O email inclui uma ligação válida por 24 horas; se expirar, a página permite
+pedir uma nova ligação. A recuperação de palavra-passe usa um token de uso
+único e uma ligação enviada para o email registado. Em produção, configura
+`WEB_APP_URL` com o endereço HTTPS da aplicação Web.
+
+O serviço `worker` do Docker Compose processa notificações e emails pela fila
+Celery/Redis. Em instalações fora do Compose, inicia um worker com
+`celery -A config worker --loglevel=info` junto do backend. Se o broker estiver
+indisponível, notificações internas continuam guardadas; os emails com falha
+podem ser reenviados pelo Django Admin.
+
+Valida os tipos com `npm run check:types` dentro da pasta `mobile`.
+
 Para validar o frontend:
 
 ```powershell
@@ -112,6 +163,10 @@ revisão são visíveis ao próprio prestador. Apenas administradores autorizado
 podem transferir os ficheiros pelo Django Admin; a API não devolve URLs dos
 documentos e estes não são servidos por `MEDIA_URL`.
 
+As mudanças administrativas do estado de verificação ficam registadas numa
+trilha de auditoria de leitura no Django Admin, com o responsável, o estado
+anterior e novo, a data e o feedback associado.
+
 Em desenvolvimento, os documentos ficam em `private_uploads/`, separados dos
 ficheiros públicos. Em produção, configure no ambiente do backend
 `AWS_STORAGE_BUCKET_NAME`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` e
@@ -129,6 +184,11 @@ O Compose inicia o backend, PostgreSQL e Redis para desenvolvimento:
 ```powershell
 docker compose up --build
 ```
+
+O backend do Compose usa `runserver` apenas para desenvolvimento. A imagem
+`Dockerfile` usa Gunicorn para servir a aplicação WSGI; configura
+`DJANGO_SETTINGS_MODULE=config.settings.production` e as variáveis de produção
+ao executar a imagem fora do Compose de desenvolvimento.
 
 O backend fica disponível em `http://localhost:8000`. Não há migrações
 automáticas no arranque; aplique-as manualmente após iniciar os serviços:
@@ -281,15 +341,18 @@ Pedidos, propostas e contratações:
   `GET /api/v1/notifications/unread_count/` consulta o total não lido;
   `POST /api/v1/notifications/{id}/read/` marca uma notificação como lida e
   `POST /api/v1/notifications/read_all/` marca todas as notificações próprias.
+  `POST /api/v1/push-tokens/` regista ou atualiza o token Expo do dispositivo;
+  `POST /api/v1/push-tokens/deactivate/` desativa o token da própria conta.
   Cada mensagem recebida gera uma notificação visível apenas ao destinatário e
   um email ao endereço registado na conta. A entrega ocorre depois da transação
   da mensagem, tem estado de envio auditável e pode ser repetida por um
-  administrador no Django Admin. Em desenvolvimento, os emails aparecem na
+  administrador no Django Admin. Com `PUSH_NOTIFICATIONS_ENABLED=true`, também
+  envia um aviso push genérico aos dispositivos ativos da conta. Em desenvolvimento, os emails aparecem na
   consola; em produção, configura `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_HOST_USER`,
   `EMAIL_HOST_PASSWORD`, `EMAIL_USE_TLS` ou `EMAIL_USE_SSL` e
   `DEFAULT_FROM_EMAIL`. `WEB_APP_URL` é opcional e adiciona um link base no
-  email. Email pode ser desativado com `EMAIL_NOTIFICATIONS_ENABLED=false`;
-  notificações push ainda não estão disponíveis.
+  email. `EMAIL_NOTIFICATIONS_ENABLED=false` desativa emails de mensagens, mas
+  emails de confirmação de conta e recuperação continuam ativos.
 - `GET/POST /api/v1/availability/`, `PATCH /api/v1/availability/{id}/` e
   `DELETE /api/v1/availability/{id}/` permitem ao prestador gerir os seus
   horários semanais, usando dias de segunda-feira (`0`) a domingo (`6`) e horas
@@ -323,6 +386,10 @@ admin, após corrigir a configuração.
 Autenticação inicial:
 
 - `POST /api/v1/auth/register/`
+- `POST /api/v1/auth/verify-email/`
+- `POST /api/v1/auth/verify-email/resend/`
+- `POST /api/v1/auth/password-reset/`
+- `POST /api/v1/auth/password-reset/confirm/`
 - `POST /api/v1/auth/token/`
 - `POST /api/v1/auth/token/refresh/`
 - `GET/PATCH /api/v1/auth/me/`
@@ -331,13 +398,18 @@ Autenticação inicial:
 O login fornece JWT com access token de 15 minutos e refresh token de 7 dias.
 Os refresh tokens são rotacionados e revogados no logout. O limite inicial é
 de 5 tentativas de login por minuto e 5 registos por hora. Respostas de registo
-e falha de login evitam revelar se um e-mail já possui conta.
+e falha de login evitam revelar se um e-mail já possui conta. Novas contas só
+podem iniciar sessão depois da confirmação do email; contas existentes ficam
+confirmadas por omissão na migração. A confirmação expira após 24 horas e pode
+ser reenviada sem revelar se a conta existe. A recuperação também responde de
+forma genérica e revoga os refresh tokens emitidos quando a palavra-passe muda.
 
-Os restantes endpoints de domínio serão adicionados incrementalmente, após
-definição e testes das regras de autenticação, autorização e validação.
+Os endpoints de domínio descritos acima estão disponíveis incrementalmente,
+com as regras de autenticação, autorização e validação implementadas no backend.
 
 ## Próximas fases
 
-1. Notificações push para dispositivos móveis.
+1. Validar notificações push em development builds Android/iOS e configurar as
+   credenciais do Expo para cada plataforma.
 2. Integração com provedor de pagamentos, após definição do provedor e do fluxo
    de processamento de fundos.

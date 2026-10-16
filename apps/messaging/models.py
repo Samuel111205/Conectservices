@@ -115,3 +115,28 @@ class Notification(models.Model):
 
     def __str__(self):
         return f"{self.title} — {self.recipient}"
+
+
+class PushDeviceToken(models.Model):
+    class Platform(models.TextChoices):
+        ANDROID = "ANDROID", "Android"
+        IOS = "IOS", "iOS"
+
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="push_device_tokens",
+    )
+    token = models.CharField(max_length=255, unique=True)
+    platform = models.CharField(max_length=8, choices=Platform.choices)
+    is_active = models.BooleanField(default=True, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("-updated_at", "-id")
+        verbose_name = "dispositivo de notificações"
+        verbose_name_plural = "dispositivos de notificações"
+
+    def __str__(self):
+        return f"{self.platform} — {self.user}"
