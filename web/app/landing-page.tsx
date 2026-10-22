@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import Link from "next/link";
 import { requisitarJson } from "@/lib/api-client";
+import BusinessLogo from "@/app/components/business-logo";
 import styles from "./page.module.css";
 
 type ApiPage<T> = {
@@ -29,6 +30,11 @@ type Provider = {
   id: number;
   commercial_name: string;
   description: string;
+  business_profile: {
+    logo: string;
+    website: string;
+    opening_hours: Record<string, string>;
+  } | null;
   active_service_count: number;
   average_rating: string | null;
   review_count: number;
@@ -49,6 +55,21 @@ const filtrosIniciais: DiscoveryFilters = {
   ordering: "-rating",
   page: 1,
 };
+
+const imagensFundoHero = [
+  "https://images.unsplash.com/photo-1523275335684-37898b6baf30?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1541643600914-78b084683601?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1581578731548-c64695cc6952?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1521737711867-e3b97375f902?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1800&q=80",
+  "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?auto=format&fit=crop&w=1800&q=80",
+];
 
 const categoriasSugeridas = [
   {
@@ -76,6 +97,8 @@ const categoriasSugeridas = [
     description: "Soluções para casa e escritório",
   },
 ];
+
+const iconesCategoria = ["♡", "✂", "⚒", "▣", "➜", "♨", "▱", "⌂", "✦", "⋯"];
 
 async function obterDadosApi<T>(
   endpoint: string,
@@ -173,6 +196,15 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
   const [tentativaFiltros, definirTentativaFiltros] = useState(0);
   const [menuMovelAberto, definirMenuMovelAberto] = useState(false);
   const [tentativas, definirTentativas] = useState(0);
+  const [indiceImagemHero, definirIndiceImagemHero] = useState(0);
+
+  useEffect(() => {
+    const temporizador = window.setInterval(() => {
+      definirIndiceImagemHero((atual) => (atual + 1) % imagensFundoHero.length);
+    }, 5_000);
+
+    return () => window.clearInterval(temporizador);
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -228,6 +260,17 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
           definirErroNosFiltros("");
           definirCategorias(paginaCategorias.results);
           definirMunicipios(paginaMunicipios.results);
+          const municipioLuanda = paginaMunicipios.results.find(
+            (municipio) =>
+              municipio.name.trim().toLocaleLowerCase("pt-AO") === "luanda",
+          );
+          if (municipioLuanda) {
+            definirFiltros((atual) =>
+              atual.municipality
+                ? atual
+                : { ...atual, municipality: String(municipioLuanda.id) },
+            );
+          }
         }
       } catch {
         if (ativo) {
@@ -292,7 +335,9 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
   const temFiltrosAtivos = Boolean(
     filtros.search || filtros.category || filtros.municipality,
   );
-
+  const categoriasVisiveis = categorias.length
+    ? categorias.slice(0, 10)
+    : categoriasSugeridas;
   function limparFiltros() {
     definirTextoPesquisa("");
     definirCarregamento(true);
@@ -308,577 +353,359 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
 
   return (
     <main className={styles.site}>
-      <header className={styles.header}>
-        <Link className={styles.brand} href={appMode ? "/conta" : "/"} aria-label="Conect Services — início">
-          <span className={styles.brandMark} aria-hidden="true">C</span>
-          <span className={styles.brandName}>conect<span className={styles.brandAccent}>.</span><small>services</small></span>
-        </Link>
-
-        <div className={styles.headerActions}>
-          <a className={styles.providerButton} href="#tornar-prestador">
-            Sou prestador
-          </a>
-          <a className={styles.headerSearchButton} href="#pesquisa">
-            Explorar serviços
-          </a>
-        </div>
-
-        <button
-          className={styles.menuButton}
-          type="button"
-          aria-label={menuMovelAberto ? "Fechar menu" : "Abrir menu"}
-          aria-expanded={menuMovelAberto}
-          onClick={() => definirMenuMovelAberto((open) => !open)}
-        >
-          <Icone name="menu" />
-        </button>
-
-        <nav
-          className={`${styles.navigation} ${menuMovelAberto ? styles.navigationOpen : ""}`}
-          aria-label="Navegação principal"
-        >
-          <a href="#categorias" onClick={() => definirMenuMovelAberto(false)}>
-            Categorias
-          </a>
-          <a href="#como-funciona" onClick={() => definirMenuMovelAberto(false)}>
-            Como funciona
-          </a>
-          <a href="#clientes" onClick={() => definirMenuMovelAberto(false)}>
-            Para clientes
-          </a>
-          <a href="#tornar-prestador" onClick={() => definirMenuMovelAberto(false)}>
-            Para profissionais
-          </a>
-          {appMode ? <Link href="/conta" onClick={() => definirMenuMovelAberto(false)}>A minha área</Link> : <>
-            <Link href="/entrar" onClick={() => definirMenuMovelAberto(false)}>Entrar</Link>
-            <Link href="/registar" onClick={() => definirMenuMovelAberto(false)}>Criar conta</Link>
-          </>}
-        </nav>
-      </header>
-
-      <section className={styles.hero}>
-        <div className={styles.heroContent}>
-          <div className={styles.eyebrow}>
-            <span className={styles.eyebrowLine} />
-            O teu próximo serviço começa com uma boa ligação
-          </div>
-          <h1>
-            Encontra os profissionais certos para o que{" "}
-            <span>precisas.</span>
-          </h1>
-          <p className={styles.heroDescription}>
-            Descobre profissionais de confiança ou apresenta os teus serviços
-            a quem procura soluções como a tua.
-          </p>
-          <div className={styles.heroButtons}>
-            <a className={styles.heroPrimaryButton} href="#pesquisa">
-              Encontrar um profissional <Icone name="arrow" size={17} />
-            </a>
-            <a className={styles.heroSecondaryButton} href="#tornar-prestador">
-              Divulgar o meu negócio
-            </a>
-          </div>
-        </div>
-
-        <div className={styles.heroVisual}>
-          <div
-            className={styles.heroImage}
-            role="img"
-            aria-label="Profissionais a colaborar numa reunião de trabalho"
-          />
-          <div className={styles.imageNote}>
-            <span className={styles.noteIcon} aria-hidden="true">
-              <Icone name="spark" size={21} />
-            </span>
-            <span>
-              <strong>Pessoas certas. Novas possibilidades.</strong>
-              <small>Uma rede feita para o teu negócio.</small>
-            </span>
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.searchSection} id="pesquisa">
-        <form className={styles.searchPanel} onSubmit={enviarPesquisa}>
-          <label className={styles.searchField}>
-            <Icone name="search" size={21} />
-            <span className={styles.visuallyHidden}>Que serviço procuras?</span>
-            <input
-              type="search"
-              placeholder="Que serviço procuras?"
-              value={textoPesquisa}
-              onChange={(evento) => definirTextoPesquisa(evento.target.value)}
-            />
-          </label>
-          <label className={styles.searchField}>
-            <Icone name="pin" size={21} />
-            <span className={styles.visuallyHidden}>Localização</span>
-            <select
-              value={filtros.municipality}
-              onChange={(evento) =>
-                atualizarFiltro("municipality", evento.target.value)
-              }
+      <div className={styles.homeShell}>
+        <div className={styles.primaryColumn}>
+          <header className={styles.header}>
+            <Link
+              className={styles.brand}
+              href={appMode ? "/conta" : "/"}
+              aria-label="Conect Services — início"
             >
-              <option value="">Todas as localizações</option>
-              {municipios.map((municipality) => (
-                <option key={municipality.id} value={municipality.id}>
-                  {municipality.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button className={styles.searchButton} type="submit">
-            Pesquisar serviços
-          </button>
-        </form>
-        {erroNosFiltros && (
-          <div className={styles.filterNotice} role="status">
-            <span>{erroNosFiltros}</span>
-            <button
-              type="button"
-              onClick={() => definirTentativaFiltros((tentativa) => tentativa + 1)}
-            >
-              Atualizar filtros
-            </button>
-          </div>
-        )}
-      </section>
-
-      <section className={styles.categorySection} id="categorias">
-        <div className={styles.sectionHeading}>
-          <div>
-            <div className={styles.sectionKicker}>Explora serviços</div>
-            <h2>Categorias populares</h2>
-            <p className={styles.sectionSubtitle}>
-              Encontra profissionais e empresas para o que precisas.
-            </p>
-          </div>
-          <a href="#prestadores" className={styles.textLink}>
-            Ver todos os serviços <Icone name="arrow" size={17} />
-          </a>
-        </div>
-        <div className={styles.categoryList}>
-          {categorias.length ? (
-            categorias.slice(0, 8).map((categoria, index) => (
-              <button
-                className={`${styles.categoryCard} ${filtros.category === String(categoria.id) ? styles.categorySelected : ""}`}
-                key={categoria.id}
-                type="button"
-                onClick={() => selecionarCategoria(String(categoria.id))}
-              >
-                <span className={`${styles.categoryIcon} ${styles[`categoryIcon${index % 4}`]}`}>
-                  <Icone
-                    name={index % 2 === 0 ? "briefcase" : "spark"}
-                    size={22}
-                  />
-                </span>
-                <span className={styles.categoryText}>
-                  <span className={styles.categoryName}>{categoria.name}</span>
-                  <small className={styles.categoryDescription}>
-                    {categoria.description}
-                  </small>
-                </span>
-                <span className={styles.categoryArrow}>
-                  <Icone name="arrow" size={16} />
-                </span>
-              </button>
-            ))
-          ) : (
-            categoriasSugeridas.map((categoria, index) => (
-              <button
-                className={styles.categoryCard}
-                key={categoria.name}
-                type="button"
-                onClick={() => pesquisarCategoriaSugerida(categoria.name)}
-              >
-                <span className={`${styles.categoryIcon} ${styles[`categoryIcon${index % 4}`]}`}>
-                  <Icone
-                    name={index % 2 === 0 ? "briefcase" : "spark"}
-                    size={22}
-                  />
-                </span>
-                <span className={styles.categoryText}>
-                  <span className={styles.categoryName}>{categoria.name}</span>
-                  <small className={styles.categoryDescription}>
-                    {categoria.description}
-                  </small>
-                </span>
-                <span className={styles.categoryArrow}>
-                  <Icone name="arrow" size={16} />
-                </span>
-              </button>
-            ))
-          )}
-        </div>
-      </section>
-
-      <section className={styles.providerSection} id="prestadores">
-        <div className={styles.sectionHeading}>
-          <div>
-            <div className={styles.sectionKicker}>Escolhidos com confiança</div>
-            <h2>
-              Profissionais em destaque
-              {nomeCategoriaSelecionada ? (
-                <span className={styles.titleFilter}> · {nomeCategoriaSelecionada}</span>
-              ) : null}
-            </h2>
-          </div>
-          <label className={styles.sortLabel}>
-            Ordenar por
-            <select
-              value={filtros.ordering}
-              onChange={(evento) => atualizarFiltro("ordering", evento.target.value)}
-            >
-              <option value="-rating">Melhor avaliação</option>
-              <option value="-services">Mais serviços</option>
-              <option value="name">Nome A–Z</option>
-            </select>
-          </label>
-        </div>
-
-        {temFiltrosAtivos && (
-          <div className={styles.activeFilters} aria-live="polite">
-            <div className={styles.activeFilterList}>
-              <span className={styles.activeFilterLabel}>Filtros ativos</span>
-              {filtros.search && (
-                <span className={styles.activeFilter}>
-                  Pesquisa: “{filtros.search}”
-                </span>
-              )}
-              {nomeCategoriaSelecionada && (
-                <span className={styles.activeFilter}>
-                  Categoria: {nomeCategoriaSelecionada}
-                </span>
-              )}
-              {nomeMunicipioSelecionado && (
-                <span className={styles.activeFilter}>
-                  Localização: {nomeMunicipioSelecionado}
-                </span>
-              )}
-            </div>
-            <button
-              className={styles.clearFiltersButton}
-              type="button"
-              onClick={limparFiltros}
-            >
-              Limpar filtros
-            </button>
-          </div>
-        )}
-
-        {erroNaPesquisa ? (
-          <div className={styles.statusPanel} role="alert">
-            <span className={styles.statusIcon}>!</span>
-            <div>
-              <strong>Não foi possível carregar os prestadores.</strong>
-              <p>
-                A API não respondeu como esperado. Verifica a ligação e tenta novamente.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                definirCarregamento(true);
-                definirErroNaPesquisa("");
-                definirTentativas((quantidade) => quantidade + 1);
-              }}
-            >
-              Tentar novamente
-            </button>
-          </div>
-        ) : estaCarregando ? (
-          <div className={styles.loadingGrid} aria-label="A carregar prestadores">
-            {[0, 1, 2].map((item) => (
-              <div className={styles.skeletonCard} key={item}>
-                <span />
-                <span />
-                <span />
-              </div>
-            ))}
-          </div>
-        ) : prestadores.length ? (
-          <>
-            <div className={styles.providerGrid}>
-              {prestadores.map((prestador) => (
-                <article className={styles.providerCard} key={prestador.id}>
-                  <div className={styles.providerCardHeader}>
-                    <div className={styles.providerAvatar}>
-                      {prestador.commercial_name.slice(0, 1).toLocaleUpperCase("pt-AO")}
-                    </div>
-                    <span className={styles.providerVerified}>
-                      <span /> Verificado
-                    </span>
-                  </div>
-                  <h3>{prestador.commercial_name}</h3>
-                  <p className={styles.providerDescription}>
-                    {prestador.description || "Prestador de serviços em Angola."}
-                  </p>
-                  <div className={styles.providerStats}>
-                    <span className={styles.providerRating}>
-                      <span aria-label="avaliação média">★</span>{" "}
-                      {prestador.average_rating ?? "Novo"}
-                    </span>
-                    <span>{formatarContagemAvaliacoes(prestador.review_count)}</span>
-                    <span>
-                      {prestador.active_service_count}{" "}
-                      {prestador.active_service_count === 1 ? "serviço" : "serviços"}
-                    </span>
-                  </div>
-                  <Link
-                    className={styles.providerLink}
-                    href={`/prestadores/${prestador.id}`}
-                  >
-                    Ver perfil e serviços <Icone name="arrow" size={17} />
-                  </Link>
-                </article>
-              ))}
-            </div>
-            <div className={styles.pagination}>
-              <span>{quantidadePrestadores} prestadores encontrados</span>
-              <div>
-                <button
-                  type="button"
-                  disabled={!temPaginaAnterior}
-                  onClick={() =>
-                    {
-                      definirCarregamento(true);
-                      definirFiltros((atual) => ({
-                        ...atual,
-                        page: Math.max(1, atual.page - 1),
-                      }));
-                    }
-                  }
-                >
-                  Anterior
-                </button>
-                <span>Página {filtros.page}</span>
-                <button
-                  type="button"
-                  disabled={!temProximaPagina}
-                  onClick={() =>
-                    {
-                      definirCarregamento(true);
-                      definirFiltros((atual) => ({
-                        ...atual,
-                        page: atual.page + 1,
-                      }));
-                    }
-                  }
-                >
-                  Seguinte
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className={styles.emptyState}>
-            <span className={styles.emptyIcon}>
-              <Icone name="search" size={24} />
-            </span>
-            <h3>A tua próxima boa escolha começa aqui.</h3>
-            <p>
-              {filtros.search || filtros.category || filtros.municipality
-                ? "Ainda não encontrámos prestadores com estes filtros. Experimenta ajustar a pesquisa."
-                : "Estamos a preparar a comunidade de prestadores verificados. Volta em breve para descobrir quem pode ajudar."}
-            </p>
-            {(filtros.search || filtros.category || filtros.municipality) && (
-              <button
-                type="button"
-                onClick={limparFiltros}
-              >
-                Limpar pesquisa
-              </button>
-            )}
-          </div>
-        )}
-      </section>
-
-      <section className={styles.howSection} id="como-funciona">
-        <div className={styles.howHeading}>
-          <div className={styles.sectionKicker}>Simples, como deve ser</div>
-          <h2>Uma boa parceria começa em 3 passos.</h2>
-          <p>
-            Da pesquisa ao contacto, a Conect Services ajuda a tornar o processo
-            mais simples.
-          </p>
-        </div>
-        <div className={styles.steps}>
-          <article className={styles.step}>
-            <span className={styles.stepNumber}>01</span>
-            <span className={styles.stepIcon}>
-              <Icone name="search" size={22} />
-            </span>
-            <h3>Define o que procuras</h3>
-            <p>
-              Pesquisa por serviço, categoria ou localização para encontrares
-              opções relevantes.
-            </p>
-          </article>
-          <article className={styles.step}>
-            <span className={styles.stepNumber}>02</span>
-            <span className={styles.stepIcon}>
-              <Icone name="briefcase" size={22} />
-            </span>
-            <h3>Descobre opções</h3>
-            <p>
-              Explora perfis de profissionais e empresas e compara a informação
-              disponível.
-            </p>
-          </article>
-          <article className={styles.step}>
-            <span className={styles.stepNumber}>03</span>
-            <span className={styles.stepIcon}>
-              <Icone name="spark" size={22} />
-            </span>
-            <h3>Estabelece contacto</h3>
-            <p>
-              Entra em contacto com o profissional para esclarecer detalhes e
-              combinar o serviço.
-            </p>
-          </article>
-        </div>
-        <a href="#pesquisa" className={styles.stepsCta}>
-          Começar agora <Icone name="arrow" size={17} />
-        </a>
-      </section>
-
-      <section className={styles.audienceSection} id="clientes">
-        <div
-          className={styles.audienceImage}
-          role="img"
-          aria-label="Equipa a conversar e planear um projeto"
-        />
-        <div className={styles.audienceCopy}>
-          <div className={styles.sectionKicker}>Para clientes e empresas</div>
-          <h2>O teu negócio precisa de boas ligações para crescer.</h2>
-          <p>
-            Encontra competências, serviços e parceiros que te ajudam a
-            transformar ideias em resultados.
-          </p>
-          <ul className={styles.checkList}>
-            <li>Descobre profissionais de várias áreas.</li>
-            <li>Pesquisa por categoria e localização.</li>
-            <li>Conhece cada profissional antes de entrar em contacto.</li>
-          </ul>
-          <a className={styles.audienceButton} href="#pesquisa">
-            Encontrar profissionais <Icone name="arrow" size={17} />
-          </a>
-        </div>
-      </section>
-
-      <section
-        className={`${styles.audienceSection} ${styles.professionalSection}`}
-        id="tornar-prestador"
-      >
-        <div className={styles.audienceCopy}>
-          <div className={styles.sectionKicker}>Para prestadores de serviços</div>
-          <h2>O teu talento merece ser encontrado.</h2>
-          <p>
-            Apresenta os teus serviços a potenciais clientes e aumenta a
-            presença digital do teu negócio.
-          </p>
-          <ul className={styles.checkList}>
-            <li>Mostra os teus serviços e especialidades.</li>
-            <li>Aumenta a visibilidade da tua atividade profissional.</li>
-            <li>Cria oportunidades com clientes e pequenas empresas.</li>
-          </ul>
-          <Link className={styles.audienceButton} href="/perfil">
-            Apresentar os meus serviços <Icone name="arrow" size={17} />
-          </Link>
-        </div>
-        <div
-          className={styles.professionalImage}
-          role="img"
-          aria-label="Profissional a trabalhar no seu negócio"
-        />
-      </section>
-
-      <section className={styles.benefitsSection}>
-        <div className={styles.howHeading}>
-          <div className={styles.sectionKicker}>Conect Services</div>
-          <h2>Mais informação. Melhores escolhas.</h2>
-          <p>
-            Uma plataforma pensada para aproximar pessoas, profissionais e
-            empresas.
-          </p>
-        </div>
-        <div className={styles.benefits}>
-          <article>
-            <Icone name="search" size={23} />
-            <h3>Encontra com facilidade</h3>
-            <p>
-              Procura serviços por categoria e localização, de forma simples e
-              organizada.
-            </p>
-          </article>
-          <article>
-            <Icone name="spark" size={23} />
-            <h3>Conexões relevantes</h3>
-            <p>
-              Aproxima clientes de profissionais e empresas que correspondem
-              ao que procuram.
-            </p>
-          </article>
-          <article>
-            <Icone name="arrow" size={23} />
-            <h3>Oportunidades de crescimento</h3>
-            <p>
-              Ajuda profissionais independentes e pequenas empresas a
-              apresentarem o seu trabalho a novos clientes.
-            </p>
-          </article>
-        </div>
-      </section>
-
-      <section className={styles.finalCta}>
-        <div>
-          <h2>A tua próxima oportunidade começa aqui.</h2>
-          <p>Encontra um serviço ou dá mais visibilidade ao teu negócio.</p>
-        </div>
-        <a href="#pesquisa">
-          Explorar a plataforma <Icone name="arrow" size={17} />
-        </a>
-      </section>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerGrid}>
-          <div>
-            <Link className={styles.footerBrand} href={appMode ? "/conta" : "/"}>
-              Conect Services
+              <span className={styles.brandMark} aria-hidden="true">C</span>
+              <span className={styles.brandName}>
+                Conect <span className={styles.brandAccent}>Services</span>
+                <small>Conectando o mundo, movendo o futuro.</small>
+              </span>
             </Link>
-            <p>
-              Ligamos clientes, profissionais e pequenas empresas em Angola.
-            </p>
-          </div>
-          <div>
-            <h3>Explorar</h3>
-            <a href="#categorias">Categorias</a>
-            <a href="#como-funciona">Como funciona</a>
-            <a href="#pesquisa">Pesquisar serviços</a>
-          </div>
-          <div>
-            <h3>Para profissionais</h3>
-            <a href="#tornar-prestador">Divulgar serviços</a>
-            <Link href="/perfil">Criar perfil profissional</Link>
-            <a href="mailto:contacto@conectservices.ao">Contactar a equipa</a>
-          </div>
-          <div>
-            <h3>Conta</h3>
-            {appMode ? <Link href="/conta">Área pessoal</Link> : <>
-              <Link href="/entrar">Entrar</Link>
-              <Link href="/registar">Criar conta</Link>
-            </>}
-            <Link href="/pedidos/novo">Pedir um serviço</Link>
-          </div>
+
+            <nav
+              className={`${styles.navigation} ${menuMovelAberto ? styles.navigationOpen : ""}`}
+              aria-label="Navegação principal"
+            >
+              <a href="#inicio" onClick={() => definirMenuMovelAberto(false)}>
+                Início
+              </a>
+              <a href="#categorias" onClick={() => definirMenuMovelAberto(false)}>
+                Serviços
+              </a>
+              <Link href="/produtos" onClick={() => definirMenuMovelAberto(false)}>
+                Produtos
+              </Link>
+              <a href="#empresas" onClick={() => definirMenuMovelAberto(false)}>
+                Empresas
+              </a>
+              <a href="#prestadores" onClick={() => definirMenuMovelAberto(false)}>
+                Prestadores
+              </a>
+              <a href="#como-funciona" onClick={() => definirMenuMovelAberto(false)}>
+                Como funciona
+              </a>
+            </nav>
+
+            <div className={styles.headerActions}>
+              {appMode ? (
+                <Link className={styles.headerSearchButton} href="/conta">
+                  A minha área
+                </Link>
+              ) : (
+                <>
+                  <Link className={styles.headerLogin} href="/entrar">
+                    Entrar
+                  </Link>
+                  <Link className={styles.headerSearchButton} href="/registar">
+                    Criar conta
+                  </Link>
+                </>
+              )}
+            </div>
+
+            <button
+              className={styles.menuButton}
+              type="button"
+              aria-label={menuMovelAberto ? "Fechar menu" : "Abrir menu"}
+              aria-expanded={menuMovelAberto}
+              onClick={() => definirMenuMovelAberto((open) => !open)}
+            >
+              <Icone name="menu" />
+            </button>
+          </header>
+
+          <section className={styles.hero} id="inicio">
+            <div className={styles.heroBackgrounds} aria-hidden="true">
+              {imagensFundoHero.map((imagem, indice) => (
+                <div
+                  key={imagem}
+                  className={`${styles.heroBackground} ${indice === indiceImagemHero ? styles.heroBackgroundActive : ""}`}
+                  style={{ backgroundImage: `url("${imagem}")` }}
+                />
+              ))}
+            </div>
+            <div className={styles.heroContent}>
+              <div className={styles.eyebrow}>
+                <span className={styles.eyebrowLine} />
+                Serviços locais, ligações de confiança
+              </div>
+              <h1>
+                Encontre os melhores serviços em <span>Angola.</span>
+              </h1>
+              <p className={styles.heroDescription}>
+                Conectamos clientes, pequenas e médias empresas e prestadores de
+                serviços, num só lugar.
+              </p>
+              <form
+                className={styles.searchPanel}
+                id="pesquisa"
+                onSubmit={enviarPesquisa}
+              >
+                <label className={styles.searchField}>
+                  <Icone name="search" size={20} />
+                  <span className={styles.visuallyHidden}>Que serviço procura?</span>
+                  <input
+                    type="search"
+                    placeholder="O que você procura?"
+                    value={textoPesquisa}
+                    onChange={(evento) => definirTextoPesquisa(evento.target.value)}
+                  />
+                </label>
+                <label className={styles.searchField}>
+                  <Icone name="pin" size={20} />
+                  <span className={styles.visuallyHidden}>Localização</span>
+                  <select
+                    value={filtros.municipality}
+                    onChange={(evento) =>
+                      atualizarFiltro("municipality", evento.target.value)
+                    }
+                  >
+                    <option value="">Todas as localizações</option>
+                    {municipios.map((municipality) => (
+                      <option key={municipality.id} value={municipality.id}>
+                        {municipality.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button className={styles.searchButton} type="submit">
+                  Pesquisar
+                </button>
+              </form>
+              {erroNosFiltros && (
+                <div className={styles.filterNotice} role="status">
+                  <span>{erroNosFiltros}</span>
+                  <button
+                    type="button"
+                    onClick={() => definirTentativaFiltros((tentativa) => tentativa + 1)}
+                  >
+                    Atualizar filtros
+                  </button>
+                </div>
+              )}
+              <div className={styles.searchExamples}>
+                <span>Exemplos:</span>
+                {categoriasSugeridas.slice(0, 6).map((categoria) => (
+                  <button
+                    key={categoria.name}
+                    type="button"
+                    onClick={() => pesquisarCategoriaSugerida(categoria.name)}
+                  >
+                    {categoria.name.split(" ")[0]}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className={styles.heroVisual}>
+              <div className={styles.heroFeatureCard}>
+                <span className={styles.featureEyebrow}>Conect Services</span>
+                <h2>Serviços mais perto de si</h2>
+                <ul>
+                  <li><span>✓</span> Rápido</li>
+                  <li><span>✓</span> Seguro</li>
+                  <li><span>✓</span> Confiável</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className={styles.categorySection} id="categorias">
+            <div className={styles.sectionHeading}>
+              <div>
+                <div className={styles.sectionKicker}>Explore por categoria</div>
+                <h2>O que você precisa hoje?</h2>
+              </div>
+              <a href="#prestadores" className={styles.textLink}>
+                Ver todos <Icone name="arrow" size={16} />
+              </a>
+            </div>
+            <div className={styles.categoryList}>
+              {categoriasVisiveis.map((categoria, index) => {
+                const idCategoria = "id" in categoria ? String(categoria.id) : "";
+                const categoriaSelecionada =
+                  Boolean(idCategoria) && filtros.category === idCategoria;
+                return (
+                  <button
+                    className={`${styles.categoryCard} ${categoriaSelecionada ? styles.categorySelected : ""}`}
+                    key={categoria.name}
+                    type="button"
+                    onClick={() =>
+                      idCategoria
+                        ? selecionarCategoria(idCategoria)
+                        : pesquisarCategoriaSugerida(categoria.name)
+                    }
+                  >
+                    <span className={`${styles.categoryIcon} ${styles[`categoryIcon${index % 4}`]}`} aria-hidden="true">
+                      {iconesCategoria[index % iconesCategoria.length]}
+                    </span>
+                    <span className={styles.categoryName}>{categoria.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className={styles.providerSection} id="prestadores">
+            <div className={styles.sectionHeading}>
+              <div id="empresas">
+                <div className={styles.sectionKicker}>Perto de si</div>
+                <h2>
+                  Empresas e prestadores de serviços
+                  {nomeCategoriaSelecionada ? <span className={styles.titleFilter}> · {nomeCategoriaSelecionada}</span> : null}
+                </h2>
+              </div>
+              <label className={styles.sortLabel}>
+                Ordenar por
+                <select value={filtros.ordering} onChange={(evento) => atualizarFiltro("ordering", evento.target.value)}>
+                  <option value="-rating">Melhor avaliação</option>
+                  <option value="-services">Mais serviços</option>
+                  <option value="name">Nome A–Z</option>
+                </select>
+              </label>
+            </div>
+
+            {temFiltrosAtivos && (
+              <div className={styles.activeFilters} aria-live="polite">
+                <div className={styles.activeFilterList}>
+                  <span className={styles.activeFilterLabel}>Filtros ativos</span>
+                  {filtros.search && <span className={styles.activeFilter}>Pesquisa: “{filtros.search}”</span>}
+                  {nomeCategoriaSelecionada && <span className={styles.activeFilter}>Categoria: {nomeCategoriaSelecionada}</span>}
+                  {nomeMunicipioSelecionado && <span className={styles.activeFilter}>Localização: {nomeMunicipioSelecionado}</span>}
+                </div>
+                <button className={styles.clearFiltersButton} type="button" onClick={limparFiltros}>Limpar filtros</button>
+              </div>
+            )}
+
+            {erroNaPesquisa ? (
+              <div className={styles.statusPanel} role="alert">
+                <span className={styles.statusIcon}>!</span>
+                <div>
+                  <strong>Não foi possível carregar os prestadores.</strong>
+                  <p>A API não respondeu como esperado. Verifique a ligação e tente novamente.</p>
+                </div>
+                <button type="button" onClick={() => {
+                  definirCarregamento(true);
+                  definirErroNaPesquisa("");
+                  definirTentativas((quantidade) => quantidade + 1);
+                }}>Tentar novamente</button>
+              </div>
+            ) : estaCarregando ? (
+              <div className={styles.loadingGrid} aria-label="A carregar prestadores">
+                {[0, 1, 2, 3].map((item) => <div className={styles.skeletonCard} key={item}><span /><span /><span /></div>)}
+              </div>
+            ) : prestadores.length ? (
+              <>
+                <div className={styles.providerGrid}>
+                  {prestadores.slice(0, 8).map((prestador) => (
+                    <article className={styles.providerCard} key={prestador.id}>
+                      <div className={styles.providerCardHeader}>
+                        {prestador.business_profile ? (
+                          <BusinessLogo
+                            className={styles.providerAvatarImage}
+                            companyName={prestador.commercial_name}
+                            logoUrl={prestador.business_profile.logo}
+                            width={52}
+                            height={52}
+                          />
+                        ) : (
+                          <div className={styles.providerAvatar}>{prestador.commercial_name.slice(0, 1).toLocaleUpperCase("pt-AO")}</div>
+                        )}
+                        <div className={styles.providerBadges}>
+                          {prestador.business_profile && <span className={styles.providerType}>Empresa</span>}
+                          <span className={styles.providerVerified}><span /> Verificado</span>
+                        </div>
+                      </div>
+                      <h3>{prestador.commercial_name}</h3>
+                      <p className={styles.providerDescription}>{prestador.description || "Prestador de serviços em Angola."}</p>
+                      <div className={styles.providerStats}>
+                        <span className={styles.providerRating}><span aria-label="avaliação média">★</span> {prestador.average_rating ?? "Novo"}</span>
+                        <span>{formatarContagemAvaliacoes(prestador.review_count)}</span>
+                        <span>{prestador.active_service_count} {prestador.active_service_count === 1 ? "serviço" : "serviços"}</span>
+                      </div>
+                      <Link className={styles.providerLink} href={`/prestadores/${prestador.id}`}>
+                        Ver perfil <Icone name="arrow" size={16} />
+                      </Link>
+                    </article>
+                  ))}
+                </div>
+                <div className={styles.pagination}>
+                  <span>{quantidadePrestadores} empresas e prestadores encontrados</span>
+                  <div>
+                    <button type="button" disabled={!temPaginaAnterior} onClick={() => {
+                      definirCarregamento(true);
+                      definirFiltros((atual) => ({ ...atual, page: Math.max(1, atual.page - 1) }));
+                    }}>Anterior</button>
+                    <span>Página {filtros.page}</span>
+                    <button type="button" disabled={!temProximaPagina} onClick={() => {
+                      definirCarregamento(true);
+                      definirFiltros((atual) => ({ ...atual, page: atual.page + 1 }));
+                    }}>Seguinte</button>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className={styles.emptyState}>
+                <span className={styles.emptyIcon}><Icone name="search" size={24} /></span>
+                <h3>A sua próxima boa escolha começa aqui.</h3>
+                <p>{temFiltrosAtivos
+                  ? "Ainda não encontramos empresas ou prestadores com estes filtros. Experimente ajustar a pesquisa."
+                  : "Estamos a preparar a comunidade de empresas e prestadores verificados. Volte em breve para descobrir quem pode ajudar."}</p>
+                {temFiltrosAtivos && <button type="button" onClick={limparFiltros}>Limpar pesquisa</button>}
+              </div>
+            )}
+          </section>
+
+          <section className={styles.howItWorks} id="como-funciona" aria-labelledby="how-it-works-title">
+            <div className={styles.howItWorksIntro}>
+              <span>Como funciona</span>
+              <h2 id="how-it-works-title">Encontre, compare e entre em contacto.</h2>
+              <p>A plataforma aproxima clientes, empresas e profissionais. O contacto e os detalhes do serviço são combinados diretamente entre as partes.</p>
+            </div>
+            <ol className={styles.howItWorksSteps}>
+              <li>
+                <span>1</span>
+                <div><strong>Pesquise o que precisa</strong><p>Escolha um serviço e indique a localização.</p></div>
+              </li>
+              <li>
+                <span>2</span>
+                <div><strong>Compare perfis</strong><p>Consulte empresas, profissionais e serviços publicados.</p></div>
+              </li>
+              <li>
+                <span>3</span>
+                <div><strong>Entre em contacto</strong><p>Fale diretamente com quem pode prestar o serviço.</p></div>
+              </li>
+            </ol>
+          </section>
+
+          <section className={styles.finalCta} id="tornar-prestador">
+            <div>
+              <span>Conect Services</span>
+              <h2>Faça parte da Conect Services</h2>
+              <p>Seja cliente, prestador ou empresa. Juntos, movemos o futuro de Angola.</p>
+            </div>
+            <div className={styles.audienceLinks}>
+              <Link href="/registar">Sou cliente</Link>
+              <Link href="/perfil">Sou prestador</Link>
+              <Link href="/empresa">Sou empresa</Link>
+            </div>
+          </section>
+
+          <footer className={styles.footer}>
+            <Link className={styles.footerBrand} href={appMode ? "/conta" : "/"}>Conect Services</Link>
+            <span>Ligando pessoas, profissionais e empresas em Angola.</span>
+            <span>© {new Date().getFullYear()} Conect Services</span>
+          </footer>
         </div>
-        <div className={styles.copyright}>
-          <span>
-            © {new Date().getFullYear()} Conect Services. Todos os direitos
-            reservados.
-          </span>
-          <span>Feito para conectar oportunidades em Angola.</span>
-        </div>
-      </footer>
+
+
+      </div>
     </main>
   );
 }

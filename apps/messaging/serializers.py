@@ -93,7 +93,9 @@ class MessageSerializer(serializers.ModelSerializer):
 
 class NotificationSerializer(serializers.ModelSerializer):
     actor_id = serializers.IntegerField(read_only=True, allow_null=True)
-    conversation_id = serializers.IntegerField(read_only=True)
+    conversation_id = serializers.IntegerField(read_only=True, allow_null=True)
+    product_order_id = serializers.IntegerField(read_only=True, allow_null=True)
+    href = serializers.SerializerMethodField()
 
     class Meta:
         model = Notification
@@ -104,10 +106,25 @@ class NotificationSerializer(serializers.ModelSerializer):
             "body",
             "actor_id",
             "conversation_id",
+            "product_order_id",
+            "href",
             "created_at",
             "read_at",
         )
         read_only_fields = fields
+
+    def get_href(self, notification):
+        request = self.context.get("request")
+        if notification.product_order_id is not None:
+            if (
+                request is not None
+                and notification.product_order.provider.user_id == request.user.pk
+            ):
+                return f"/empresa/encomendas?encomenda={notification.product_order_id}"
+            return f"/compras?encomenda={notification.product_order_id}"
+        if notification.conversation_id is not None:
+            return f"/mensagens?conversa={notification.conversation_id}"
+        return None
 
 
 class PushDeviceTokenSerializer(serializers.ModelSerializer):

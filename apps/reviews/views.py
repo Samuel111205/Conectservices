@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
@@ -35,17 +35,22 @@ class ReviewViewSet(
             return Review.objects.none()
         consulta = Review.objects.select_related(
             "booking__provider",
+            "product_order__provider",
         )
         id_prestador = self._provider_id()
         if id_prestador is not None:
-            consulta = consulta.filter(booking__provider_id=id_prestador)
+            consulta = consulta.filter(
+                Q(booking__provider_id=id_prestador)
+                | Q(product_order__provider_id=id_prestador)
+            )
         return consulta
 
     @action(detail=False, methods=("get",))
     def summary(self, request):
         id_prestador = self._provider_id(required=True)
         summary = Review.objects.filter(
-            booking__provider_id=id_prestador,
+            Q(booking__provider_id=id_prestador)
+            | Q(product_order__provider_id=id_prestador),
         ).aggregate(
             average=Avg("rating"),
             count=Count("pk"),

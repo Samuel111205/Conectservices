@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 
 from apps.accounts.models import User
 from apps.bookings.models import Booking
@@ -59,7 +59,8 @@ def construir_painel(*, user):
             status=Payment.Status.CONFIRMED,
         ).aggregate(total=Sum("amount"))["total"]
         review_summary = Review.objects.filter(
-            booking__provider=prestador,
+            Q(booking__provider=prestador)
+            | Q(product_order__provider=prestador),
         ).aggregate(average=Avg("rating"), count=Count("pk"))
 
         dashboard["provider"] = {

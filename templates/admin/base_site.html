@@ -1,0 +1,21 @@
+{% extends "admin/base.html" %}
+{% load static i18n %}
+
+{% block title %}{% if subtitle %}{{ subtitle }} | {% endif %}{{ title }} | {{ site_title|default:_('Conect Services') }}{% endblock %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'admin/css/conect-admin.css' %}">
+{% endblock %}
+
+{% block branding %}
+  <a class="conect-admin-brand" href="{% url 'admin:index' %}" aria-label="Conect Services &mdash; painel administrativo">
+    <span class="conect-admin-mark" aria-hidden="true">C</span>
+    <span class="conect-admin-brand-copy">
+      <strong>Conect <span>Services</span></strong>
+      <small>Administra&ccedil;&atilde;o da plataforma</small>
+    </span>
+  </a>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}

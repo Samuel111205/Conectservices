@@ -1,3 +1,4 @@
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from .models import Booking
@@ -13,6 +14,7 @@ class BookingSerializer(serializers.ModelSerializer):
         read_only=True,
     )
     service_name = serializers.CharField(source="service.name", read_only=True)
+    review = serializers.SerializerMethodField()
 
     class Meta:
         model = Booking
@@ -32,6 +34,7 @@ class BookingSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "completed_at",
+            "review",
         )
         read_only_fields = fields
 
@@ -45,3 +48,14 @@ class BookingSerializer(serializers.ModelSerializer):
             requisicao is not None
             and booking.provider.user_id == requisicao.user.pk
         )
+
+    def get_review(self, booking):
+        try:
+            review = booking.review
+        except ObjectDoesNotExist:
+            return None
+        return {
+            "rating": review.rating,
+            "comment": review.comment,
+            "created_at": review.created_at,
+        }

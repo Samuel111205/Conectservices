@@ -26,7 +26,8 @@ export default function EstruturaAutenticacao({
   account?: boolean;
 }) {
   const pathname = usePathname();
-  const providerArea = pathname.startsWith("/prestador");
+  const providerArea = pathname.startsWith("/prestador") || pathname.startsWith("/empresa");
+  const companyArea = pathname.startsWith("/empresa");
   useEffect(() => {
     if (providerArea) rememberActiveArea("provider");
     else if (pathname === "/conta") rememberActiveArea("client");
@@ -92,9 +93,9 @@ export default function EstruturaAutenticacao({
             <Link href="/mensagens">Mensagens</Link>
             <Link
               className={styles.createAction}
-              href={providerArea ? "/prestador/servicos#formulario-servico" : "/pedidos/novo"}
+              href={companyArea ? "/empresa/produtos#formulario-produto" : providerArea ? "/prestador/servicos#formulario-servico" : "/pedidos/novo"}
             >
-              <span aria-hidden="true">＋</span> {providerArea ? "Adicionar serviço" : "Pedir serviço"}
+              <span aria-hidden="true">＋</span> {companyArea ? "Adicionar produto" : providerArea ? "Adicionar serviço" : "Pedir serviço"}
             </Link>
           </div>
         </div>
@@ -105,9 +106,9 @@ export default function EstruturaAutenticacao({
           {nav()}
           <Link
             className={styles.sidebarCreate}
-            href={providerArea ? "/prestador/servicos#formulario-servico" : "/pedidos/novo"}
+            href={companyArea ? "/empresa/produtos#formulario-produto" : providerArea ? "/prestador/servicos#formulario-servico" : "/pedidos/novo"}
           >
-            <span aria-hidden="true">＋</span> {providerArea ? "Adicionar serviço" : "Pedir um serviço"}
+            <span aria-hidden="true">＋</span> {companyArea ? "Adicionar produto" : providerArea ? "Adicionar serviço" : "Pedir um serviço"}
           </Link>
           <div className={styles.sidebarNote}>
             <span className={styles.sidebarNoteMark} aria-hidden="true">✦</span>
@@ -131,6 +132,9 @@ export default function EstruturaAutenticacao({
               <Link href="/prestador/pedidos"><strong>Encontrar pedidos</strong><span>Descobre oportunidades na tua zona.</span></Link>
               <Link href="/prestador/servicos"><strong>Gerir os teus serviços</strong><span>Mantém o teu catálogo atualizado.</span></Link>
               <Link href="/perfil"><strong>Perfil e verificação</strong><span>Revê a apresentação da tua atividade.</span></Link>
+              <Link href="/empresa"><strong>Perfil empresarial</strong><span>Regista ou actualiza os dados comerciais da empresa.</span></Link>
+              <Link href="/empresa/produtos"><strong>Gerir produtos</strong><span>Adiciona preços e stock ao catálogo.</span></Link>
+              <Link href="/empresa/encomendas"><strong>Encomendas recebidas</strong><span>Revê e responde aos pedidos de compra.</span></Link>
             </> : <>
               <Link href="/pedidos/novo"><strong>Precisas de um serviço?</strong><span>Conta o que precisas e recebe propostas.</span></Link>
               <Link href="/perfil"><strong>Completa o teu perfil</strong><span>Ajuda os profissionais a conhecerem-te.</span></Link>

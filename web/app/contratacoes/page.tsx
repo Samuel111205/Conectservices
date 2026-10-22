@@ -20,6 +20,7 @@ type Booking = {
   scheduled_at: string | null;
   status: "SCHEDULED" | "CONFIRMED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   created_at: string;
+  review: { rating: number; comment: string; created_at: string } | null;
 };
 
 type ApiPage<T> = { count: number; results: T[] };
@@ -73,6 +74,11 @@ export default function PaginaContratacoes() {
   const [idAcao, definirIdAcao] = useState<number | null>(null);
   const [erroAcao, definirErroAcao] = useState("");
   const [idErroAcao, definirIdErroAcao] = useState<number | null>(null);
+  const [classificacoes, definirClassificacoes] = useState<Record<number, number>>({});
+  const [comentarios, definirComentarios] = useState<Record<number, string>>({});
+  const [idAvaliacao, definirIdAvaliacao] = useState<number | null>(null);
+  const [erroAvaliacao, definirErroAvaliacao] = useState("");
+  const [idErroAvaliacao, definirIdErroAvaliacao] = useState<number | null>(null);
 
   useEffect(() => {
     let ativo = true;
@@ -192,6 +198,56 @@ export default function PaginaContratacoes() {
       definirIdErroAcao(reserva.id);
     } finally {
       definirIdAcao(null);
+    }
+  }
+
+  async function enviarAvaliacao(reserva: Booking) {
+    const rating = classificacoes[reserva.id] ?? 0;
+    if (rating < 1 || rating > 5) {
+      definirErroAvaliacao("Escolhe uma classificação de 1 a 5 estrelas.");
+      definirIdErroAvaliacao(reserva.id);
+      return;
+    }
+
+    definirIdAvaliacao(reserva.id);
+    definirErroAvaliacao("");
+    definirIdErroAvaliacao(null);
+    try {
+      const respostaHttp = await fetch("/api/auth/reviews/", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          booking_id: reserva.id,
+          rating,
+          comment: (comentarios[reserva.id] ?? "").trim(),
+        }),
+      });
+      const dadosRecebidos = await respostaHttp.json().catch(() => null);
+      if (respostaHttp.status === 401) {
+        navegador.replace("/entrar?next=%2Fcontratacoes");
+        return;
+      }
+      if (!respostaHttp.ok) {
+        definirErroAvaliacao(obterMensagemErro(dadosRecebidos));
+        definirIdErroAvaliacao(reserva.id);
+        return;
+      }
+
+      const avaliacao = dadosRecebidos as {
+        rating: number;
+        comment: string;
+        created_at: string;
+      };
+      definirReservas((atual) =>
+        atual.map((item) =>
+          item.id === reserva.id ? { ...item, review: avaliacao } : item,
+        ),
+      );
+    } catch {
+      definirErroAvaliacao("Não foi possível contactar o serviço.");
+      definirIdErroAvaliacao(reserva.id);
+    } finally {
+      definirIdAvaliacao(null);
     }
   }
 
@@ -402,10 +458,94 @@ export default function PaginaContratacoes() {
                 </div>
               )}
               {reserva.status === "COMPLETED" && (
-                <p className={`${styles.notice} ${styles.success}`}>
-                  Serviço concluído. A avaliação estará disponível na próxima
-                  etapa.
-                </p>
+                <div className={styles.bookingActions}>
+                  <p className={`${styles.notice} ${styles.success}`}>
+                    Serviço concluído.
+                  </p>
+                  {reserva.review ? (
+                    <div>
+                      <p className={styles.profileHint}>
+                        Avaliação enviada pelo cliente
+                      </p>
+                      <p
+                        className={styles.orderCategory}
+                        aria-label={`${reserva.review.rating} de 5 estrelas`}
+                      >
+                        <span aria-hidden="true">
+                          {"★".repeat(reserva.review.rating)}
+                          {"☆".repeat(5 - reserva.review.rating)}
+                        </span>{" "}
+                        {reserva.review.rating}/5
+                      </p>
+                      {reserva.review.comment && (
+                        <p className={styles.profileHint}>
+                          “{reserva.review.comment}”
+                        </p>
+                      )}
+                    </div>
+                  ) : reserva.is_client ? (
+                    <>
+                      <div className={styles.field}>
+                        <span>Como avalias o serviço?</span>
+                        <div role="group" aria-label="Classificação do serviço">
+                          {[1, 2, 3, 4, 5].map((rating) => {
+                            const selecionada = classificacoes[reserva.id] === rating;
+                            return (
+                              <button
+                                aria-pressed={selecionada}
+                                aria-label={`${rating} ${rating === 1 ? "estrela" : "estrelas"}`}
+                                className={selecionada ? styles.submitLink : styles.secondary}
+                                key={rating}
+                                onClick={() =>
+                                  definirClassificacoes((atual) => ({
+                                    ...atual,
+                                    [reserva.id]: rating,
+                                  }))
+                                }
+                                type="button"
+                              >
+                                ★
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      <label className={styles.field}>
+                        Comentário opcional
+                        <textarea
+                          maxLength={2000}
+                          rows={4}
+                          value={comentarios[reserva.id] ?? ""}
+                          onChange={(evento) =>
+                            definirComentarios((atual) => ({
+                              ...atual,
+                              [reserva.id]: evento.target.value,
+                            }))
+                          }
+                        />
+                      </label>
+                      {erroAvaliacao && idErroAvaliacao === reserva.id && (
+                        <p className={styles.notice} role="alert">
+                          {erroAvaliacao}
+                        </p>
+                      )}
+                      <button
+                        className={styles.submitLink}
+                        disabled={
+                          idAvaliacao === reserva.id || !classificacoes[reserva.id]
+                        }
+                        onClick={() => void enviarAvaliacao(reserva)}
+                        type="button"
+                      >
+                        {idAvaliacao === reserva.id ? "A enviar…" : "Enviar avaliação"}
+                      </button>
+                    </>
+                  ) : (
+                    <p className={styles.profileHint}>
+                      O cliente ainda não enviou uma avaliação.
+                    </p>
+                  )}
+                </div>
               )}
             </article>
           ))}

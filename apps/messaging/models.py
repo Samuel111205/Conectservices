@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.validators import MaxLengthValidator
 from django.db import models
 
+from apps.commerce.models import ProductOrder
 from apps.proposals.models import Proposal
 
 
@@ -55,6 +56,7 @@ class Message(models.Model):
 class Notification(models.Model):
     class Kind(models.TextChoices):
         MESSAGE = "MESSAGE", "Nova mensagem"
+        PRODUCT_ORDER = "PRODUCT_ORDER", "Atualização de encomenda"
 
     class EmailStatus(models.TextChoices):
         PENDING = "PENDING", "Pendente"
@@ -78,11 +80,22 @@ class Notification(models.Model):
         Conversation,
         on_delete=models.CASCADE,
         related_name="notifications",
+        null=True,
+        blank=True,
     )
     message = models.ForeignKey(
         Message,
         on_delete=models.CASCADE,
         related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    product_order = models.ForeignKey(
+        ProductOrder,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
     )
     kind = models.CharField(max_length=16, choices=Kind.choices)
     title = models.CharField(max_length=120)
@@ -110,6 +123,25 @@ class Notification(models.Model):
             models.Index(
                 fields=("email_status", "created_at"),
                 name="notif_email_status_date_idx",
+            ),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    models.Q(
+                        kind="MESSAGE",
+                        conversation__isnull=False,
+                        message__isnull=False,
+                        product_order__isnull=True,
+                    )
+                    | models.Q(
+                        kind="PRODUCT_ORDER",
+                        conversation__isnull=True,
+                        message__isnull=True,
+                        product_order__isnull=False,
+                    )
+                ),
+                name="notification_target_matches_kind",
             ),
         ]
 

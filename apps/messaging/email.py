@@ -16,7 +16,7 @@ def enviar_email_notificacao(*, notification_id):
     with transaction.atomic():
         notificacao = (
             Notification.objects.select_for_update()
-            .select_related("recipient", "actor")
+            .select_related("recipient", "actor", "product_order__provider")
             .filter(pk=notification_id)
             .first()
         )
@@ -45,14 +45,24 @@ def enviar_email_notificacao(*, notification_id):
         and hasattr(notificacao.actor, "get_full_name")
         else ""
     )
-    if not actor_name:
-        actor_name = "Um participante da conversa"
-    body = (
-        f"{actor_name} enviou uma mensagem numa conversa da Conect Services.\n\n"
-        f"{notificacao.body}\n"
-    )
+    if notificacao.kind == Notification.Kind.PRODUCT_ORDER:
+        if not actor_name:
+            actor_name = "A Conect Services"
+        body = f"{actor_name}: {notificacao.body}\n"
+        if notificacao.product_order.provider.user_id == notificacao.recipient_id:
+            destination = "empresa/encomendas"
+        else:
+            destination = "compras"
+    else:
+        if not actor_name:
+            actor_name = "Um participante da conversa"
+        body = (
+            f"{actor_name} enviou uma mensagem numa conversa da Conect Services.\n\n"
+            f"{notificacao.body}\n"
+        )
+        destination = "mensagens"
     if settings.WEB_APP_URL:
-        body += f"\nAcede à tua conta: {settings.WEB_APP_URL}\n"
+        body += f"\nAcede à tua conta: {settings.WEB_APP_URL}/{destination}\n"
 
     correio_eletronico = EmailMessage(
         subject=notificacao.title,

@@ -266,6 +266,7 @@ export default function PaginaConta() {
               <Link href="/pedidos"><strong>Acompanhar pedidos</strong><span>Consulta respostas e fala com prestadores.</span></Link>
               <Link href="/contratacoes"><strong>Ver contratações</strong><span>Gere horários e acompanha serviços.</span></Link>
               <Link href="/mensagens"><strong>Mensagens</strong><span>Continua as conversas da plataforma.</span></Link>
+              <Link href="/produtos"><strong>Comprar produtos</strong><span>Encomenda a empresas e lojas da comunidade.</span></Link>
             </div>
           </section>
           <div className={styles.accountActions}>
@@ -276,6 +277,7 @@ export default function PaginaConta() {
               Explorar serviços
             </Link>
             <Link className={styles.secondary} href="/mensagens">Mensagens</Link>
+            <Link className={styles.secondary} href="/compras">As minhas encomendas</Link>
             <Link className={styles.secondary} href="/contratacoes">
               Contratações
             </Link>

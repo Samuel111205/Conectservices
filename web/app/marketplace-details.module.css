@@ -114,6 +114,10 @@
   font-weight: 750;
 }
 
+.providerAvatarImage {
+  object-fit: cover;
+}
+
 .providerIntro h1,
 .serviceHero h1 {
   margin: 3px 0 12px;
@@ -160,6 +164,47 @@
 .summaryRating {
   color: #123b66;
   font-weight: 750;
+}
+
+.businessPublicDetails {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.businessPublicDetails > a {
+  width: fit-content;
+  color: #1769aa;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.businessPublicDetails > a:hover {
+  text-decoration: underline;
+}
+
+.businessPublicDetails dl {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px 12px;
+  margin: 0;
+}
+
+.businessPublicDetails dl > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  color: #64748b;
+  font-size: 11px;
+}
+
+.businessPublicDetails dt {
+  font-weight: 700;
+}
+
+.businessPublicDetails dd {
+  margin: 0;
 }
 
 .section {

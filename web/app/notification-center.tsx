@@ -9,7 +9,9 @@ type Notification = {
   kind: string;
   title: string;
   body: string;
-  conversation_id: number;
+  conversation_id: number | null;
+  product_order_id: number | null;
+  href: string | null;
   created_at: string;
   read_at: string | null;
 };
@@ -39,7 +41,7 @@ export default function NotificationCenter() {
 
   useEffect(() => {
     let ativo = true;
-    async function atualizarContagem() {
+    async function atualizarContagem(atualizarFeed = false) {
       try {
         const resposta = await fetch("/api/auth/notifications/unread-count/", {
           cache: "no-store",
@@ -53,18 +55,30 @@ export default function NotificationCenter() {
         if (ativo && Number.isFinite(dados.unread_count)) {
           definirPorLer(Math.max(0, dados.unread_count));
         }
+        if (ativo && aberto && atualizarFeed) {
+          const respostaFeed = await fetch("/api/auth/notifications/?page=1", {
+            cache: "no-store",
+          });
+          if (respostaFeed.ok) {
+            const notificacoesAtuais = (await respostaFeed.json()) as NotificationPage;
+            if (ativo) definirNotificacoes(notificacoesAtuais.results ?? []);
+          }
+        }
       } catch {
         // O feed continua utilizável se a contagem estiver temporariamente indisponível.
       }
     }
 
     void atualizarContagem();
-    const temporizador = window.setInterval(() => void atualizarContagem(), 45_000);
+    const temporizador = window.setInterval(
+      () => void atualizarContagem(true),
+      45_000,
+    );
     return () => {
       ativo = false;
       window.clearInterval(temporizador);
     };
-  }, [pathname, router]);
+  }, [aberto, pathname, router]);
 
   async function carregarNotificacoes() {
     definirCarregamento(true);
@@ -125,7 +139,16 @@ export default function NotificationCenter() {
       }
     }
     definirAberto(false);
-    router.push(`/mensagens?conversa=${notificacao.conversation_id}`);
+    const destino = notificacao.href ?? (
+      notificacao.conversation_id
+        ? `/mensagens?conversa=${notificacao.conversation_id}`
+        : "/compras"
+    );
+    if (destino.split("?")[0] === pathname) {
+      window.location.assign(destino);
+      return;
+    }
+    router.push(destino);
   }
 
   return (

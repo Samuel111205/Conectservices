@@ -17,6 +17,30 @@ from .email import enviar_email_notificacao
 logger = logging.getLogger(__name__)
 
 
+def _agendar_entrega_notificacao(notificacao):
+    from .tasks import entregar_email_notificacao, entregar_push_notificacao
+
+    transaction.on_commit(
+        lambda: entregar_email_notificacao.delay(notificacao.pk), robust=True
+    )
+    transaction.on_commit(
+        lambda: entregar_push_notificacao.delay(notificacao.pk), robust=True
+    )
+
+
+def criar_notificacao_encomenda(*, encomenda, recipient, actor, title, body):
+    notificacao = Notification.objects.create(
+        recipient=recipient,
+        actor=actor,
+        product_order=encomenda,
+        kind=Notification.Kind.PRODUCT_ORDER,
+        title=title,
+        body=body[:500],
+    )
+    _agendar_entrega_notificacao(notificacao)
+    return notificacao
+
+
 def _e_participante(proposal, user):
     return (
         proposal.order.client_id == user.pk
@@ -101,14 +125,7 @@ def enviar_mensagem(*, conversation_id, actor, body):
         title="Nova mensagem",
         body=body[:500],
     )
-    from .tasks import entregar_email_notificacao, entregar_push_notificacao
-
-    transaction.on_commit(
-        lambda: entregar_email_notificacao.delay(notificacao.pk), robust=True
-    )
-    transaction.on_commit(
-        lambda: entregar_push_notificacao.delay(notificacao.pk), robust=True
-    )
+    _agendar_entrega_notificacao(notificacao)
     return mensagem
 
 
@@ -150,15 +167,24 @@ def enviar_push_notification(*, notification_id):
     if access_token:
         headers["Authorization"] = f"Bearer {access_token}"
 
+    if notificacao.kind == Notification.Kind.PRODUCT_ORDER:
+        body = notificacao.body
+        data = {
+            "notificationId": notificacao.pk,
+            "productOrderId": notificacao.product_order_id,
+        }
+    else:
+        body = "Tens uma nova mensagem sobre um serviço."
+        data = {
+            "notificationId": notificacao.pk,
+            "conversationId": notificacao.conversation_id,
+        }
     messages = [
         {
             "to": device.token,
             "title": notificacao.title,
-            "body": "Tens uma nova mensagem sobre um serviço.",
-            "data": {
-                "notificationId": notificacao.pk,
-                "conversationId": notificacao.conversation_id,
-            },
+            "body": body,
+            "data": data,
             "sound": "default",
             "priority": "high",
         }

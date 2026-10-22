@@ -29,6 +29,23 @@ python manage.py check
 python manage.py migrate
 ```
 
+Noutro terminal, mantenha a API ativa enquanto utiliza a aplicacao Web:
+
+```powershell
+python manage.py runserver 127.0.0.1:8000
+```
+
+## Painel administrativo
+
+Crie uma conta de superutilizador no terminal do backend:
+
+```powershell
+python manage.py createsuperuser
+```
+
+Depois, aceda a `http://localhost:8000/admin/` e entre com o email e a senha
+definidos. O Django Admin exige uma conta com permissões administrativas.
+
 Para carregar categorias, prestadores e serviços de demonstração apenas no
 ambiente local:
 
@@ -211,6 +228,16 @@ Perfil e prestador:
 - `POST /api/v1/providers/` inicia um perfil de prestador.
 - `GET/PATCH /api/v1/providers/me/` consulta ou atualiza os próprios dados
   comerciais.
+
+Empresas:
+
+- `POST /api/v1/businesses/` cria um perfil empresarial ligado ao perfil de
+  prestador da conta autenticada, ou completa um perfil de prestador existente.
+- `GET/PATCH /api/v1/businesses/me/` consulta ou actualiza os dados da empresa
+  pertencente à conta autenticada.
+- Uma conta pode ter um único perfil empresarial. O nome legal, endereço,
+  website, horário e logótipo são opcionais; a informação legal não é exigida
+  para criar o perfil.
 
 Cada conta pode ter no máximo um perfil pessoal e um perfil de prestador. Um
 prestador novo inicia como pendente; o estado e a data de verificação são

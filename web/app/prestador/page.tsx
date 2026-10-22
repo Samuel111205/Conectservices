@@ -15,6 +15,7 @@ type Summary = { opportunities: number; proposals: number; services: number };
 type Atividade = { id: string; titulo: string; detalhe: string; estado: string; data: string; href: string };
 type Proposal = { id: number; order_id: number; order_title: string; status: string; created_at: string };
 type Booking = { id: number; order_id: number; status: string; created_at: string };
+type ProductOrder = { id: number; is_provider: boolean; status: string; created_at: string };
 type OpportunityPage = { count: number; results: Array<{ id: number; title: string; created_at: string }> };
 type Dashboard = {
   provider: {
@@ -75,17 +76,19 @@ export default function PainelPrestador() {
           opportunities = opportunitiesPage?.count ?? 0;
         }
       }
-      const [proposalsResponse, bookingsResponse] = await Promise.all([
+      const [proposalsResponse, bookingsResponse, productOrdersResponse] = await Promise.all([
         fetch("/api/auth/proposals/", { cache: "no-store" }),
         fetch("/api/auth/bookings/", { cache: "no-store" }),
+        fetch("/api/auth/product-orders", { cache: "no-store" }),
       ]);
-      if ([proposalsResponse, bookingsResponse].some((response) => response.status === 401)) {
+      if ([proposalsResponse, bookingsResponse, productOrdersResponse].some((response) => response.status === 401)) {
         router.replace("/entrar?next=%2Fprestador");
         return;
       }
-      const [proposals, bookings] = await Promise.all([
+      const [proposals, bookings, productOrders] = await Promise.all([
         proposalsResponse.ok ? proposalsResponse.json() as Promise<{ results: Proposal[] }> : Promise.resolve({ results: [] }),
         bookingsResponse.ok ? bookingsResponse.json() as Promise<{ results: Booking[] }> : Promise.resolve({ results: [] }),
+        productOrdersResponse.ok ? productOrdersResponse.json() as Promise<{ results: ProductOrder[] }> : Promise.resolve({ results: [] }),
       ]);
       if (!active) return;
       setProvider(providerData);
@@ -107,6 +110,11 @@ export default function PainelPrestador() {
           id: `contratacao-${booking.id}`, titulo: `Contratação #${booking.id}`,
           detalhe: `Pedido #${booking.order_id}`, estado: nomesEstado[booking.status] ?? booking.status,
           data: booking.created_at, href: "/contratacoes",
+        })),
+        ...productOrders.results.filter((order) => order.is_provider).map((order) => ({
+          id: `encomenda-produto-${order.id}`, titulo: `Encomenda de produtos #${order.id}`,
+          detalhe: "Compra recebida", estado: nomesEstado[order.status] ?? order.status,
+          data: order.created_at, href: "/empresa/encomendas",
         })),
         ...(opportunitiesPage?.results ?? []).map((opportunity) => ({
           id: `oportunidade-${opportunity.id}`, titulo: opportunity.title,
@@ -170,6 +178,8 @@ export default function PainelPrestador() {
             <div className={styles.dashboardLinks}>
               <Link href="/prestador/pedidos"><strong>Encontrar pedidos</strong><span>Consulta oportunidades e envia propostas.</span></Link>
               <Link href="/prestador/servicos"><strong>Gerir serviços</strong><span>Atualiza o catálogo que os clientes encontram.</span></Link>
+              <Link href="/empresa/produtos"><strong>Gerir produtos</strong><span>Publica artigos com preço e stock.</span></Link>
+              <Link href="/empresa/encomendas"><strong>Encomendas recebidas</strong><span>Responde aos pedidos dos clientes.</span></Link>
               <Link href="/perfil"><strong>Perfil e verificação</strong><span>Completa os dados e acompanha os documentos.</span></Link>
               <Link href="/mensagens"><strong>Mensagens</strong><span>Responde a clientes e acompanha conversas.</span></Link>
               <Link href="/contratacoes"><strong>Contratações</strong><span>Gere marcações e serviços em curso.</span></Link>

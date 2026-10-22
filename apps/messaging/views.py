@@ -134,7 +134,7 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             return Notification.objects.none()
         return Notification.objects.filter(
             recipient=self.request.user,
-        ).select_related("conversation", "actor")
+        ).select_related("conversation", "actor", "product_order__provider")
 
     @action(detail=False, methods=("get",))
     def unread_count(self, request):

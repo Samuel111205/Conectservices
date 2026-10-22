@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiRequestError, requisitarJson } from "@/lib/api-client";
+import BusinessLogo from "@/app/components/business-logo";
 import styles from "./marketplace-details.module.css";
 
 type ApiPage<T> = { results: T[] };
@@ -10,6 +11,11 @@ type Provider = {
   id: number;
   commercial_name: string;
   description: string;
+  business_profile: {
+    logo: string;
+    website: string;
+    opening_hours: Record<string, string>;
+  } | null;
   active_service_count: number;
   average_rating: string | null;
   review_count: number;
@@ -46,6 +52,15 @@ const diasSemana = [
   "Segunda-feira", "Terça-feira", "Quarta-feira", "Quinta-feira",
   "Sexta-feira", "Sábado", "Domingo",
 ];
+const nomesDiasEmpresa: Record<string, string> = {
+  monday: "Segunda-feira",
+  tuesday: "Terça-feira",
+  wednesday: "Quarta-feira",
+  thursday: "Quinta-feira",
+  friday: "Sexta-feira",
+  saturday: "Sábado",
+  sunday: "Domingo",
+};
 
 function formatarPreco(servico: Service) {
   if (servico.price_type === "ON_REQUEST" || servico.minimum_price === null) {
@@ -115,11 +130,23 @@ function PerfilPrestador({ dados }: { dados: PublicData }) {
   return (
     <>
       <section className={styles.providerHero}>
-        <div className={styles.providerAvatar} aria-hidden="true">
-          {provider.commercial_name.slice(0, 1).toLocaleUpperCase("pt-AO")}
-        </div>
+        {provider.business_profile ? (
+          <BusinessLogo
+            className={`${styles.providerAvatar} ${styles.providerAvatarImage}`}
+            companyName={provider.commercial_name}
+            logoUrl={provider.business_profile.logo}
+            width={78}
+            height={78}
+          />
+        ) : (
+          <div className={styles.providerAvatar} aria-hidden="true">
+            {provider.commercial_name.slice(0, 1).toLocaleUpperCase("pt-AO")}
+          </div>
+        )}
         <div className={styles.providerIntro}>
-          <p className={styles.eyebrow}>Prestador verificado</p>
+          <p className={styles.eyebrow}>
+            {provider.business_profile ? "Empresa · prestador verificado" : "Prestador verificado"}
+          </p>
           <h1>{provider.commercial_name}</h1>
           <p>{provider.description || "Profissional verificado na comunidade Conect Services."}</p>
           <div className={styles.metrics}>
@@ -127,6 +154,25 @@ function PerfilPrestador({ dados }: { dados: PublicData }) {
             <span><strong>{provider.review_count}</strong> {provider.review_count === 1 ? "avaliação" : "avaliações"}</span>
             <span><strong>{provider.active_service_count}</strong> {provider.active_service_count === 1 ? "serviço ativo" : "serviços ativos"}</span>
           </div>
+          {provider.business_profile && (
+            <div className={styles.businessPublicDetails}>
+              {provider.business_profile.website && (
+                <a href={provider.business_profile.website} target="_blank" rel="noopener noreferrer">
+                  Visitar website da empresa
+                </a>
+              )}
+              {Object.entries(provider.business_profile.opening_hours ?? {}).length > 0 && (
+                <dl>
+                  {Object.entries(provider.business_profile.opening_hours).map(([day, hours]) => (
+                    <div key={day}>
+                      <dt>{nomesDiasEmpresa[day] ?? day}</dt>
+                      <dd>{hours}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
+            </div>
+          )}
         </div>
       </section>
 

@@ -1,10 +1,13 @@
 from rest_framework import serializers
 
+from apps.businesses.serializers import BusinessProfilePublicSerializer
+
 from .models import Provider, ProviderVerificationDocument
 from .validators import validate_verification_document
 
 
 class ProviderDiscoverySerializer(serializers.ModelSerializer):
+    business_profile = BusinessProfilePublicSerializer(read_only=True)
     active_service_count = serializers.IntegerField(read_only=True)
     average_rating = serializers.DecimalField(
         max_digits=3,
@@ -20,6 +23,7 @@ class ProviderDiscoverySerializer(serializers.ModelSerializer):
             "id",
             "commercial_name",
             "description",
+            "business_profile",
             "active_service_count",
             "average_rating",
             "review_count",

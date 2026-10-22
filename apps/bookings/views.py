@@ -58,7 +58,7 @@ class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         utilizador = self.request.user
         return Booking.objects.filter(
             Q(client=utilizador) | Q(provider__user=utilizador)
-        ).select_related("order", "proposal", "provider", "service")
+        ).select_related("order", "proposal", "provider", "service", "review")
 
     @action(detail=True, methods=("post",))
     def confirm(self, request, pk=None):

@@ -1,0 +1,71 @@
+.commerceSection { margin-top: 28px; }
+.commerceHeading { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+.commerceHeading h2 { margin: 0; color: #10264a; font-size: 1.45rem; }
+.commerceHeading p { margin: 6px 0 0; color: #586e88; }
+.commerceLinks { display: flex; flex-wrap: wrap; gap: 10px; margin: 16px 0; }
+.commerceLinks a { border: 1px solid #d6e5f5; border-radius: 9px; padding: 9px 12px; color: #1266ad; background: #f5faff; font-weight: 700; text-decoration: none; }
+.commerceLinks .primaryLink { border-color: #0877e8; color: #fff; background: #0877e8; }
+.commerceForm { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; margin: 18px 0 26px; padding: 18px; border: 1px solid #e1e9f2; border-radius: 14px; background: #f9fbfe; }
+.commerceForm label { display: grid; gap: 6px; color: #3d5572; font-size: .9rem; font-weight: 650; }
+.commerceForm input,
+.commerceForm select,
+.commerceForm textarea { width: 100%; border: 1px solid #d5dfeb; border-radius: 8px; padding: 10px; color: #10264a; background: #fff; font: inherit; }
+.commerceForm input[type="file"] { min-height: 46px; padding: 7px; color: #526984; cursor: pointer; }
+.commerceForm textarea { min-height: 94px; resize: vertical; }
+.wide { grid-column: 1 / -1; }
+.productImagePreview { min-height: 230px; border: 1px solid #d5dfeb; border-radius: 14px; background-color: #eef5fc; background-position: center; background-size: contain; background-repeat: no-repeat; }
+.checkboxLabel { display: flex !important; align-items: center; gap: 9px !important; }
+.checkboxLabel input { width: auto; }
+.productList { display: grid; gap: 12px; }
+.productRow { display: grid; grid-template-columns: 68px minmax(0, 1fr) auto; gap: 15px; align-items: center; padding: 15px; border: 1px solid #e1e9f2; border-radius: 12px; background: #fff; }
+.productThumb { display: grid; width: 68px; height: 68px; place-items: center; border-radius: 10px; background-color: #e8f2fc; background-position: center; background-size: cover; color: #1978c9; font-size: 24px; }
+.productRow h3 { margin: 0; color: #10264a; font-size: 1.03rem; }
+.productRow p { margin: 5px 0 0; color: #596f89; font-size: .88rem; }
+.productActions { display: flex; flex-wrap: wrap; gap: 8px; }
+.productActions button { border: 1px solid #d5e2f0; border-radius: 8px; padding: 8px 11px; color: #115e9d; background: #f7fbff; font: inherit; font-weight: 700; cursor: pointer; }
+.productActions button:disabled { opacity: .6; cursor: wait; }
+.productActions .acceptOrderButton { border-color: #0877e8; color: #fff; background: #0877e8; }
+.formActions { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.formActions button { border: 0; border-radius: 9px; padding: 11px 16px; color: #fff; background: #0877e8; font: inherit; font-weight: 700; cursor: pointer; }
+.formActions button:disabled { opacity: .6; cursor: wait; }
+.status { display: inline-flex; margin-top: 7px; border-radius: 999px; padding: 4px 9px; color: #286043; background: #eaf7ef; font-size: .76rem; font-weight: 700; }
+.status[data-active="false"] { color: #6c5b35; background: #fff4d8; }
+.inlineMessage { margin: 14px 0; border-radius: 9px; padding: 11px 13px; color: #165b37; background: #eaf7ef; }
+.inlineError { margin: 14px 0; border-radius: 9px; padding: 11px 13px; color: #a72a21; background: #fff1ee; }
+.profileImagePanel { display: flex; align-items: center; gap: 16px; padding: 15px; border: 1px solid #dce7f3; border-radius: 12px; background: #fff; }
+.profileImagePanel strong { color: #173b67; font-size: .98rem; }
+.profileImagePanel p { margin: 5px 0 0; color: #667a92; font-size: .88rem; line-height: 1.45; }
+.profileLogoPreview { width: 88px; height: 88px; flex: 0 0 88px; border: 1px solid #dce7f3; border-radius: 20px; object-fit: cover; }
+.emptyState { border: 1px dashed #ccd9e8; border-radius: 12px; padding: 24px; color: #596f89; text-align: center; }
+.orderList { display: grid; gap: 15px; }
+.orderCard { padding: 18px; border: 1px solid #e1e9f2; border-radius: 14px; background: #fff; }
+.orderTop { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+.orderTop h2 { margin: 0; color: #10264a; font-size: 1.1rem; }
+.orderCard p { color: #526984; }
+.orderItems { display: grid; gap: 7px; margin: 15px 0; padding: 0; list-style: none; }
+.orderItems li { display: flex; justify-content: space-between; gap: 12px; color: #344b6c; }
+.orderTotal { display: flex; justify-content: space-between; padding-top: 12px; border-top: 1px solid #e7edf4; color: #123d73; }
+.statusBadge { border-radius: 999px; padding: 5px 10px; color: #6a5120; background: #fff3d6; font-size: .78rem; font-weight: 750; }
+.statusBadge[data-status="ACCEPTED"] { color: #135f9c; background: #e8f3ff; }
+.statusBadge[data-status="COMPLETED"] { color: #21653d; background: #e8f7ed; }
+.statusBadge[data-status="CANCELLED"],
+.statusBadge[data-status="REJECTED"] { color: #8d3429; background: #fff0ed; }
+.orderContact { display: flex; flex-wrap: wrap; gap: 9px 16px; margin: 12px 0; }
+.orderContact a { color: #1266ad; font-weight: 650; }
+.paymentNote { margin: 12px 0; border-radius: 9px; padding: 10px 12px; color: #5b4b22; background: #fff7e2; font-size: .88rem; }
+.reviewPanel { display: grid; gap: 10px; margin-top: 18px; padding-top: 16px; border-top: 1px solid #e7edf4; }
+.reviewPanel > p { margin: 0; color: #526984; }
+.reviewPanel label { display: grid; gap: 6px; color: #3d5572; font-size: .9rem; font-weight: 650; }
+.reviewPanel textarea { width: 100%; border: 1px solid #d5dfeb; border-radius: 8px; padding: 10px; color: #10264a; background: #fff; font: inherit; resize: vertical; }
+.reviewStars { display: flex; flex-wrap: wrap; gap: 8px; }
+.reviewStars button { min-width: 42px; min-height: 42px; border: 1px solid #d5e2f0; border-radius: 8px; color: #a7b2c0; background: #f7fbff; font-size: 1.25rem; cursor: pointer; }
+.reviewStars button[data-selected="true"] { border-color: #f0c36d; color: #e29a16; background: #fff8e8; }
+
+@media (max-width: 640px) {
+  .commerceForm { grid-template-columns: 1fr; }
+  .productRow { grid-template-columns: 58px minmax(0, 1fr); }
+  .productThumb { width: 58px; height: 58px; }
+  .productActions { grid-column: 1 / -1; }
+  .commerceHeading { align-items: flex-start; flex-direction: column; }
+  .profileImagePanel { align-items: flex-start; }
+}

@@ -24,6 +24,7 @@ export default function PaginaRegistar() {
   const [confirmacao, setConfirmation] = useState("");
   const [erro, definirErro] = useState("");
   const [success, setSuccess] = useState("");
+  const [signInHref, setSignInHref] = useState("/entrar");
   const [estaAEnviar, definirEnvio] = useState(false);
 
   async function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
@@ -62,6 +63,12 @@ export default function PaginaRegistar() {
         typeof detalhe === "string"
           ? `${detalhe} Confirma o email antes de iniciar sessão.`
           : "Se os dados forem válidos, enviámos instruções para confirmar o email.",
+      );
+      const destinoSeguinte = new URLSearchParams(window.location.search).get("next");
+      setSignInHref(
+        destinoSeguinte
+          ? `/entrar?next=${encodeURIComponent(destinoSeguinte)}`
+          : "/entrar",
       );
       definirPalavraPasse("");
       setConfirmation("");
@@ -132,7 +139,7 @@ export default function PaginaRegistar() {
         )}
         {success && (
           <p className={`${styles.notice} ${styles.success}`} role="status">
-            {success} <Link href="/entrar">Iniciar sessão</Link>
+          {success} <Link href={signInHref}>Iniciar sessão</Link>
           </p>
         )}
         <button className={styles.submit} type="submit" disabled={estaAEnviar}>

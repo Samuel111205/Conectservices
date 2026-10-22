@@ -2,6 +2,7 @@ from django.core.validators import MaxLengthValidator, MaxValueValidator, MinVal
 from django.db import models
 
 from apps.bookings.models import Booking
+from apps.commerce.models import ProductOrder
 
 
 class Review(models.Model):
@@ -9,6 +10,15 @@ class Review(models.Model):
         Booking,
         on_delete=models.PROTECT,
         related_name="review",
+        null=True,
+        blank=True,
+    )
+    product_order = models.OneToOneField(
+        ProductOrder,
+        on_delete=models.PROTECT,
+        related_name="review",
+        null=True,
+        blank=True,
     )
     rating = models.PositiveSmallIntegerField(
         validators=(MinValueValidator(1), MaxValueValidator(5)),
@@ -28,6 +38,13 @@ class Review(models.Model):
                 condition=models.Q(rating__gte=1, rating__lte=5),
                 name="review_rating_between_1_5",
             ),
+            models.CheckConstraint(
+                condition=(
+                    models.Q(booking__isnull=False, product_order__isnull=True)
+                    | models.Q(booking__isnull=True, product_order__isnull=False)
+                ),
+                name="review_exactly_one_target",
+            ),
         ]
         indexes = [
             models.Index(
@@ -37,4 +54,9 @@ class Review(models.Model):
         ]
 
     def __str__(self):
-        return f"Avaliação #{self.pk} — contratação #{self.booking_id}"
+        target = (
+            f"contratação #{self.booking_id}"
+            if self.booking_id is not None
+            else f"encomenda #{self.product_order_id}"
+        )
+        return f"Avaliação #{self.pk} — {target}"

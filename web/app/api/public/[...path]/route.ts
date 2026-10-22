@@ -9,6 +9,7 @@ const endpointsPermitidos = new Set([
   "services",
   "reviews",
   "availability",
+  "products",
 ]);
 const endpointsDeAutenticacao = new Set([
   "auth/verify-email",
@@ -26,7 +27,8 @@ export async function GET(
   const consulta = requisicao.nextUrl.searchParams;
   const endpointDePrestador = /^providers\/\d+$/.test(endpoint);
   const endpointDeServico = /^services\/\d+$/.test(endpoint);
-  if (!endpointsPermitidos.has(endpoint) && !endpointDePrestador && !endpointDeServico) {
+  const endpointDeProduto = /^products\/\d+$/.test(endpoint);
+  if (!endpointsPermitidos.has(endpoint) && !endpointDePrestador && !endpointDeServico && !endpointDeProduto) {
     return NextResponse.json({ detail: "Recurso não encontrado." }, { status: 404 });
   }
   if (

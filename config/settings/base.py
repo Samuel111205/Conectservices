@@ -18,6 +18,8 @@ INSTALLED_APPS = [
     "apps.accounts.apps.AccountsConfig",
     "apps.profiles.apps.ProfilesConfig",
     "apps.providers.apps.ProvidersConfig",
+    "apps.businesses.apps.BusinessesConfig",
+    "apps.commerce.apps.CommerceConfig",
     "apps.catalog.apps.CatalogConfig",
     "apps.locations.apps.LocationsConfig",
     "apps.orders.apps.OrdersConfig",
@@ -51,7 +53,7 @@ ROOT_URLCONF = "config.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

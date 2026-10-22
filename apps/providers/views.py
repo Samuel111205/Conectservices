@@ -1,5 +1,18 @@
-from django.db.models import Avg, Count, OuterRef, Q, Subquery, Value
-from django.db.models.functions import Coalesce
+from django.db.models import (
+    Case,
+    Count,
+    DecimalField,
+    ExpressionWrapper,
+    F,
+    IntegerField,
+    OuterRef,
+    Q,
+    Subquery,
+    Sum,
+    Value,
+    When,
+)
+from django.db.models.functions import Cast, Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from rest_framework import generics, status
@@ -15,6 +28,79 @@ from .serializers import (
     ProviderSerializer,
     ProviderVerificationDocumentSerializer,
 )
+
+
+def _anotar_avaliacoes(queryset):
+    tipo_decimal = DecimalField(max_digits=14, decimal_places=2)
+    avaliacoes_contratacoes = (
+        Review.objects.filter(booking__provider_id=OuterRef("pk"))
+        .order_by()
+        .values("booking__provider_id")
+    )
+    avaliacoes_encomendas = (
+        Review.objects.filter(product_order__provider_id=OuterRef("pk"))
+        .order_by()
+        .values("product_order__provider_id")
+    )
+    return queryset.annotate(
+        booking_review_total=Coalesce(
+            Subquery(
+                avaliacoes_contratacoes.annotate(
+                    total=Sum("rating", output_field=tipo_decimal),
+                ).values("total")[:1],
+                output_field=tipo_decimal,
+            ),
+            Value(0, output_field=tipo_decimal),
+            output_field=tipo_decimal,
+        ),
+        booking_review_count=Coalesce(
+            Subquery(
+                avaliacoes_contratacoes.annotate(total=Count("pk"))
+                .values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+            output_field=IntegerField(),
+        ),
+        product_review_total=Coalesce(
+            Subquery(
+                avaliacoes_encomendas.annotate(
+                    total=Sum("rating", output_field=tipo_decimal),
+                ).values("total")[:1],
+                output_field=tipo_decimal,
+            ),
+            Value(0, output_field=tipo_decimal),
+            output_field=tipo_decimal,
+        ),
+        product_review_count=Coalesce(
+            Subquery(
+                avaliacoes_encomendas.annotate(total=Count("pk"))
+                .values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+            output_field=IntegerField(),
+        ),
+    ).annotate(
+        reviews_total=F("booking_review_total") + F("product_review_total"),
+        review_count=F("booking_review_count") + F("product_review_count"),
+    ).annotate(
+        average_rating=Case(
+            When(
+                review_count__gt=0,
+                then=ExpressionWrapper(
+                    Cast(F("reviews_total"), tipo_decimal)
+                    / Cast(F("review_count"), tipo_decimal),
+                    output_field=DecimalField(max_digits=6, decimal_places=2),
+                ),
+            ),
+            default=Value(
+                None,
+                output_field=DecimalField(max_digits=6, decimal_places=2),
+            ),
+            output_field=DecimalField(max_digits=6, decimal_places=2),
+        )
+    )
 
 
 class ProviderCreateView(generics.CreateAPIView):
@@ -136,33 +222,31 @@ class ProviderDiscoveryView(generics.ListAPIView):
     serializer_class = ProviderDiscoverySerializer
 
     def get_queryset(self):
-        reviews = Review.objects.filter(
-            booking__provider_id=OuterRef("pk"),
-        ).order_by().values("booking__provider_id")
-        review_average = reviews.annotate(
-            value=Avg("rating"),
-        ).values("value")[:1]
-        review_count = reviews.annotate(
-            value=Count("pk"),
-        ).values("value")[:1]
-        consulta = Provider.objects.filter(
-            verification_status=Provider.VerificationStatus.VERIFIED,
-            user__is_active=True,
-        ).annotate(
-            active_service_count=Count(
-                "services",
-                filter=Q(services__is_active=True, services__category__is_active=True),
-                distinct=True,
-            ),
-            average_rating=Subquery(review_average),
-            review_count=Coalesce(Subquery(review_count), Value(0)),
-        ).filter(active_service_count__gt=0)
+        consulta = _anotar_avaliacoes(
+            Provider.objects.filter(
+                verification_status=Provider.VerificationStatus.VERIFIED,
+                user__is_active=True,
+            )
+            .select_related("business_profile")
+            .annotate(
+                active_service_count=Count(
+                    "services",
+                    filter=Q(
+                        services__is_active=True,
+                        services__category__is_active=True,
+                    ),
+                    distinct=True,
+                ),
+            )
+            .filter(active_service_count__gt=0)
+        )
 
         pesquisa = self.request.query_params.get("search", "").strip()
         if pesquisa:
             consulta = consulta.filter(
                 Q(commercial_name__icontains=pesquisa)
                 | Q(description__icontains=pesquisa)
+                | Q(business_profile__registered_name__icontains=pesquisa)
                 | Q(
                     services__name__icontains=pesquisa,
                     services__is_active=True,
@@ -225,20 +309,14 @@ class ProviderPublicDetailView(generics.RetrieveAPIView):
     permission_classes = (AllowAny,)
 
     def get_queryset(self):
-        reviews = Review.objects.filter(
-            booking__provider_id=OuterRef("pk"),
-        ).order_by().values("booking__provider_id")
-        review_average = reviews.annotate(value=Avg("rating")).values("value")[:1]
-        review_count = reviews.annotate(value=Count("pk")).values("value")[:1]
-        return Provider.objects.filter(
+        consulta = Provider.objects.filter(
             verification_status=Provider.VerificationStatus.VERIFIED,
             user__is_active=True,
-        ).annotate(
+        ).select_related("business_profile").annotate(
             active_service_count=Count(
                 "services",
                 filter=Q(services__is_active=True, services__category__is_active=True),
                 distinct=True,
             ),
-            average_rating=Subquery(review_average),
-            review_count=Coalesce(Subquery(review_count), Value(0)),
         ).filter(active_service_count__gt=0)
+        return _anotar_avaliacoes(consulta)

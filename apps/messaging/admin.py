@@ -100,6 +100,7 @@ class NotificationAdmin(admin.ModelAdmin):
         "actor",
         "conversation",
         "message",
+        "product_order",
         "kind",
         "title",
         "body",
