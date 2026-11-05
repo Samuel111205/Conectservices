@@ -5,6 +5,8 @@ import type { FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import BusinessLogo from "@/app/components/business-logo";
+import AnalyticsPanel from "@/app/components/analytics-panel";
+import { BriefcaseBusiness, MessageCircle, ShoppingBag, Star } from "lucide-react";
 import EstruturaAutenticacao from "../auth-shell";
 import styles from "../auth.module.css";
 import commerceStyles from "./commerce.module.css";
@@ -44,6 +46,7 @@ type Day =
   | "sunday";
 
 type FormErrors = Record<string, string[]>;
+type DashboardMetrics = { services: number; orders: number; contacts: number; rating: string | null; reviews: number };
 
 const days: { key: Day; label: string }[] = [
   { key: "monday", label: "Segunda-feira" },
@@ -104,6 +107,28 @@ export default function PaginaEmpresa() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+
+  useEffect(() => {
+    if (!profile) return;
+    Promise.all([
+      fetch("/api/auth/dashboard/", { cache: "no-store" }),
+      fetch("/api/auth/product-orders/", { cache: "no-store" }),
+      fetch("/api/auth/conversations/", { cache: "no-store" }),
+    ]).then(async ([dashboardResponse, ordersResponse, contactsResponse]) => {
+      const dashboard = dashboardResponse.ok ? await dashboardResponse.json() : null;
+      const orders = ordersResponse.ok ? await ordersResponse.json() as { count?: number; results?: Array<{ is_provider?: boolean }> } : null;
+      const contacts = contactsResponse.ok ? await contactsResponse.json() as { count?: number; results?: unknown[] } : null;
+      const provider = dashboard?.provider;
+      setMetrics({
+        services: provider?.services?.active ?? 0,
+        orders: orders?.count ?? orders?.results?.filter((item) => item.is_provider).length ?? 0,
+        contacts: contacts?.count ?? contacts?.results?.length ?? 0,
+        rating: provider?.reviews?.average_rating ?? null,
+        reviews: provider?.reviews?.count ?? 0,
+      });
+    }).catch(() => undefined);
+  }, [profile]);
 
   useEffect(() => {
     let active = true;
@@ -235,7 +260,7 @@ export default function PaginaEmpresa() {
   }
 
   return (
-    <EstruturaAutenticacao account>
+    <EstruturaAutenticacao account profileName={profile?.commercial_name}>
       <p className={styles.eyebrow}>Área empresarial</p>
       <h1>{profile ? "Perfil da empresa" : "Apresente a sua empresa"}</h1>
       <p className={styles.intro}>
@@ -245,7 +270,49 @@ export default function PaginaEmpresa() {
       {loading ? (
         <p className={styles.profileHint} role="status">A carregar o perfil empresarial…</p>
       ) : (
-        <section className={styles.profileSection}>
+        <>
+        {profile && <>
+          <section className={styles.companyWelcome}>
+            <BusinessLogo className={styles.companyWelcomeLogo} companyName={profile.commercial_name} logoUrl={profile.logo} width={58} height={58} />
+            <div><span>Perfil da empresa</span><strong>{profile.commercial_name}</strong><small>{profile.address || "Luanda · Angola"}</small></div>
+            <span className={styles.profileBadge}>{profile.verification_status === "VERIFIED" ? "Verificada" : profile.verification_status === "SUSPENDED" ? "Suspensa" : profile.verification_status === "REJECTED" ? "Requer atenção" : "Em análise"}</span>
+            <Link className={commerceStyles.primaryLink} href="/empresa/produtos#formulario-produto">Adicionar serviço</Link>
+          </section>
+          <div className={styles.dashboardStats} aria-label="Indicadores da empresa">
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="blue"><BriefcaseBusiness size={19} aria-hidden="true" /></span><strong>{metrics?.services ?? "—"}</strong><span>Serviços publicados</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="violet"><ShoppingBag size={19} aria-hidden="true" /></span><strong>{metrics?.orders ?? "—"}</strong><span>Encomendas recebidas</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="blue"><MessageCircle size={19} aria-hidden="true" /></span><strong>{metrics?.contacts ?? "—"}</strong><span>Contactos e conversas</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="amber"><Star size={19} aria-hidden="true" /></span><strong>{metrics?.rating ?? "—"}</strong><span>Avaliação média · {metrics?.reviews ?? 0} avaliações</span></div>
+          </div>
+          <AnalyticsPanel />
+          <section className={styles.companyPanels}>
+            <article className={styles.companyPanel}>
+              <div className={styles.feedHeading}><div><p className={styles.eyebrow}>Desempenho</p><h2>Actividade da empresa</h2></div><span>Dados disponíveis</span></div>
+              <div className={styles.companyChart} aria-label="Resumo de atividade">
+                {[
+                  { label: "Serviços", value: metrics?.services ?? 0 },
+                  { label: "Encomendas", value: metrics?.orders ?? 0 },
+                  { label: "Contactos", value: metrics?.contacts ?? 0 },
+                  { label: "Avaliações", value: metrics?.reviews ?? 0 },
+                ].map((item) => <div className={styles.companyBarRow} key={item.label}><small>{item.label}</small><span><i style={{ width: `${Math.max(2, Math.min(100, item.value * 8))}%` }} /></span><strong>{item.value}</strong></div>)}
+              </div>
+              <small>Consulta a evolução diária das visualizações, publicações e encomendas na análise abaixo.</small>
+            </article>
+            <article className={styles.companyPanel}>
+              <div className={styles.feedHeading}><div><p className={styles.eyebrow}>Gestão rápida</p><h2>Atalhos da empresa</h2></div></div>
+              <div className={styles.companyQuickLinks}>
+                <Link href="/prestador/servicos">Gerir serviços <span>Publicar e actualizar serviços</span></Link>
+                <Link href="/empresa/encomendas">Pedidos recebidos <span>Consultar encomendas e pedidos</span></Link>
+                <Link href="/mensagens">Contactos e mensagens <span>Continuar conversas com clientes</span></Link>
+              </div>
+            </article>
+          </section>
+          <section className={styles.companyPanel}>
+            <div className={styles.feedHeading}><div><p className={styles.eyebrow}>Catálogo</p><h2>Os teus serviços</h2></div><Link href="/prestador/servicos">Ver serviços</Link></div>
+            <p className={styles.profileHint}>{metrics?.services ? `${metrics.services} serviços activos no teu perfil.` : "Adiciona serviços para que os clientes encontrem a tua empresa."}</p>
+          </section>
+        </>}
+        <section className={styles.profileSection} id="perfil-empresa">
           {profile && (
             <div className={commerceStyles.commerceLinks}>
               <Link className={commerceStyles.primaryLink} href="/empresa/produtos#formulario-produto">Adicionar produto</Link>
@@ -379,6 +446,7 @@ export default function PaginaEmpresa() {
             A criação deste perfil não verifica automaticamente o registo legal da empresa. A verificação do prestador continua sujeita à revisão administrativa.
           </p>
         </section>
+        </>
       )}
     </EstruturaAutenticacao>
   );

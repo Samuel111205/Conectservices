@@ -18,10 +18,13 @@ function obterMensagemErro(dadosRecebidos: unknown) {
 }
 
 export default function PaginaRegistar() {
+  const [tipoConta, definirTipoConta] = useState<"client" | "business" | "provider">("client");
   const [correioEletronico, definirCorreioEletronico] = useState("");
   const [phone, setPhone] = useState("");
   const [palavraPasse, definirPalavraPasse] = useState("");
   const [confirmacao, setConfirmation] = useState("");
+  const [mostrarPalavraPasse, definirMostrarPalavraPasse] = useState(false);
+  const [mostrarConfirmacao, definirMostrarConfirmacao] = useState(false);
   const [erro, definirErro] = useState("");
   const [success, setSuccess] = useState("");
   const [signInHref, setSignInHref] = useState("/entrar");
@@ -65,10 +68,14 @@ export default function PaginaRegistar() {
           : "Se os dados forem válidos, enviámos instruções para confirmar o email.",
       );
       const destinoSeguinte = new URLSearchParams(window.location.search).get("next");
+      const destinoPorTipo = {
+        client: "/conta",
+        business: "/empresa",
+        provider: "/perfil",
+      }[tipoConta];
+      const destino = destinoSeguinte || destinoPorTipo;
       setSignInHref(
-        destinoSeguinte
-          ? `/entrar?next=${encodeURIComponent(destinoSeguinte)}`
-          : "/entrar",
+        `/entrar?next=${encodeURIComponent(destino)}`,
       );
       definirPalavraPasse("");
       setConfirmation("");
@@ -84,10 +91,32 @@ export default function PaginaRegistar() {
       <p className={styles.eyebrow}>Junta-te à comunidade</p>
       <h1>Cria a tua conta</h1>
       <p className={styles.intro}>
-        Regista-te para encontrar serviços e, mais tarde, criar o teu perfil
-        profissional.
+        Escolhe como vais usar a plataforma. Depois de confirmares o email, podes completar o perfil.
       </p>
       <form className={styles.form} onSubmit={enviarFormulario}>
+        <fieldset className={styles.accountTypeFieldset}>
+          <legend>Que tipo de conta queres criar?</legend>
+          <div className={styles.accountTypeGrid} role="radiogroup" aria-label="Tipo de conta">
+            {[
+              { value: "client", title: "Cliente", description: "Quero encontrar serviços." },
+              { value: "business", title: "Empresa ou PME", description: "Quero divulgar a minha empresa." },
+              { value: "provider", title: "Prestador", description: "Quero oferecer os meus serviços." },
+            ].map((option) => (
+              <button
+                key={option.value}
+                className={tipoConta === option.value ? styles.accountTypeSelected : styles.accountTypeOption}
+                type="button"
+                role="radio"
+                aria-checked={tipoConta === option.value}
+                onClick={() => definirTipoConta(option.value as "client" | "business" | "provider")}
+              >
+                <strong>{option.title}</strong>
+                <span>{option.description}</span>
+              </button>
+            ))}
+          </div>
+          <p className={styles.accountTypeHint}>O registo começa com os teus dados de acesso; os dados do perfil são pedidos na área correspondente.</p>
+        </fieldset>
         <label className={styles.field}>
           Email
           <input
@@ -112,25 +141,43 @@ export default function PaginaRegistar() {
         </label>
         <label className={styles.field}>
           Palavra-passe
-          <input
-            type="password"
-            name="password"
-            autoComplete="new-password"
-            required
-            value={palavraPasse}
-            onChange={(evento) => definirPalavraPasse(evento.target.value)}
-          />
+          <span className={styles.passwordField}>
+            <input
+              type={mostrarPalavraPasse ? "text" : "password"}
+              name="password"
+              autoComplete="new-password"
+              required
+              value={palavraPasse}
+              onChange={(evento) => definirPalavraPasse(evento.target.value)}
+            />
+            <button
+              className={styles.passwordToggle}
+              type="button"
+              aria-label={mostrarPalavraPasse ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
+              aria-pressed={mostrarPalavraPasse}
+              onClick={() => definirMostrarPalavraPasse((visivel) => !visivel)}
+            >{mostrarPalavraPasse ? "Ocultar" : "Mostrar"}</button>
+          </span>
         </label>
         <label className={styles.field}>
           Confirmar palavra-passe
-          <input
-            type="password"
-            name="password-confirmation"
-            autoComplete="new-password"
-            required
-            value={confirmacao}
-            onChange={(evento) => setConfirmation(evento.target.value)}
-          />
+          <span className={styles.passwordField}>
+            <input
+              type={mostrarConfirmacao ? "text" : "password"}
+              name="password-confirmation"
+              autoComplete="new-password"
+              required
+              value={confirmacao}
+              onChange={(evento) => setConfirmation(evento.target.value)}
+            />
+            <button
+              className={styles.passwordToggle}
+              type="button"
+              aria-label={mostrarConfirmacao ? "Ocultar confirmação" : "Mostrar confirmação"}
+              aria-pressed={mostrarConfirmacao}
+              onClick={() => definirMostrarConfirmacao((visivel) => !visivel)}
+            >{mostrarConfirmacao ? "Ocultar" : "Mostrar"}</button>
+          </span>
         </label>
         {erro && (
           <p className={styles.notice} role="alert">

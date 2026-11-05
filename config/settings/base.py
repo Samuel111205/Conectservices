@@ -198,6 +198,7 @@ REST_FRAMEWORK = {
         "auth_login": "5/minute",
         "auth_register": "5/hour",
         "auth_recovery": "5/hour",
+        "analytics_view": "30/minute",
     },
 }
 

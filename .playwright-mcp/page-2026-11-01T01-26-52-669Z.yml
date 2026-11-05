@@ -1,0 +1,55 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]:
+        - link "Conect Services — início" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - generic [aria-hidden] [ref=e6]: C
+          - generic [ref=e7]:
+            - text: conect.
+            - generic [ref=e8]: services
+        - generic [ref=e9]:
+          - paragraph [ref=e10]: Conect Services
+          - heading "Conectando pessoas, empresas e serviços em Angola." [level=2] [ref=e11]
+          - generic [ref=e12]: Encontra serviços e profissionais de confiança, ou faz o teu negócio chegar a novos clientes.
+        - list [ref=e13]:
+          - listitem [ref=e14]:
+            - generic [ref=e15]: ✓
+            - text: Encontra serviços e profissionais
+          - listitem [ref=e16]:
+            - generic [ref=e17]: ✓
+            - text: Divulga o teu negócio
+          - listitem [ref=e18]:
+            - generic [ref=e19]: ✓
+            - text: Conecta-te com clientes
+        - generic [ref=e20]: Conectando o mundo, movendo o futuro.
+      - generic [ref=e22]:
+        - generic "Acesso à conta" [ref=e23]:
+          - link "Entrar" [ref=e24] [cursor=pointer]:
+            - /url: /entrar
+          - link "Registar" [ref=e25] [cursor=pointer]:
+            - /url: /registar
+        - paragraph [ref=e26]: Acede à tua conta
+        - heading "Bem-vindo de volta!" [level=1] [ref=e27]
+        - paragraph [ref=e28]: Acede à tua conta para continuares a usar a Conect Services.
+        - generic [ref=e29]:
+          - generic [ref=e30]:
+            - text: Email
+            - textbox "Email" [ref=e31]:
+              - /placeholder: Digite o seu email
+          - generic [ref=e32]:
+            - text: Palavra-passe
+            - generic [ref=e33]:
+              - textbox "Palavra-passe Mostrar palavra-passe" [ref=e34]
+              - button "Mostrar palavra-passe" [ref=e35] [cursor=pointer]: Mostrar
+          - button "Entrar" [ref=e36] [cursor=pointer]
+        - paragraph [ref=e37]:
+          - link "Esqueceste-te da palavra-passe?" [ref=e38] [cursor=pointer]:
+            - /url: /recuperar-acesso
+        - paragraph [ref=e39]:
+          - text: Ainda não tens conta?
+          - link "Criar conta" [ref=e40] [cursor=pointer]:
+            - /url: /registar
+        - link "Voltar à página inicial" [ref=e41] [cursor=pointer]:
+          - /url: /
+  - alert [ref=e42]

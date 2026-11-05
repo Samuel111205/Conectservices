@@ -1,0 +1,76 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - link "Conect Services — início" [ref=e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=e5]: C
+        - generic [ref=e6]: conectservices
+      - navigation "Navegação principal" [ref=e7]:
+        - link "Início" [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "Produtos" [ref=e9] [cursor=pointer]:
+          - /url: /produtos
+        - link "Serviços" [ref=e10] [cursor=pointer]:
+          - /url: /explorar
+        - link "As minhas encomendas" [ref=e11] [cursor=pointer]:
+          - /url: /compras
+      - generic [ref=e12]:
+        - link "Entrar" [ref=e13] [cursor=pointer]:
+          - /url: /entrar
+        - link "Criar conta" [ref=e14] [cursor=pointer]:
+          - /url: /registar
+    - generic [ref=e18]:
+      - generic [ref=e19]:
+        - paragraph [ref=e20]: O melhor da comunidade, num só lugar
+        - heading "Encontra o que procuras. Descobre o que precisas." [level=1] [ref=e23]:
+          - text: Encontra o que procuras.
+          - generic [ref=e24]: Descobre o que precisas.
+        - paragraph [ref=e25]: Explora produtos de empresas angolanas e encontra profissionais para os teus próximos projetos.
+        - generic [ref=e26]:
+          - generic [ref=e30]: Pesquisar produtos e empresas
+          - textbox "Pesquisar produtos e empresas" [ref=e31]:
+            - /placeholder: O que procuras hoje?
+          - button "Pesquisar" [ref=e32] [cursor=pointer]
+        - generic [ref=e33]:
+          - link "Ver produtos" [ref=e34] [cursor=pointer]:
+            - /url: "#catalogo"
+          - link "Encontrar serviços" [ref=e38] [cursor=pointer]:
+            - /url: /explorar
+      - generic [aria-hidden] [ref=e45]:
+        - generic [ref=e47]:
+          - generic [ref=e55]: A tua próxima descoberta
+          - strong [ref=e56]: Feito perto.Escolhido por ti.
+          - generic [ref=e58]: Negócios locais, novas possibilidades
+        - generic [ref=e65]: Produtos
+        - generic [ref=e70]: Serviços
+    - region "Descubra na Conect Services" [ref=e83]:
+      - paragraph [ref=e91]:
+        - strong [ref=e92]: Apoia negócios locais
+        - generic [ref=e93]: Conhece produtos de empresas da comunidade.
+      - paragraph [ref=e100]:
+        - strong [ref=e101]: Encontra profissionais
+        - generic [ref=e102]: Descobre serviços para as tuas necessidades.
+      - paragraph [ref=e110]:
+        - strong [ref=e111]: Contacta diretamente
+        - generic [ref=e112]: Combina os detalhes com quem oferece.
+    - region [ref=e113]:
+      - generic [ref=e114]:
+        - generic [ref=e115]:
+          - paragraph [ref=e116]: Vitrine da comunidade
+          - heading "Produtos em destaque" [level=2] [ref=e117]
+          - paragraph [ref=e118]: Encontra algo para ti e encomenda diretamente à empresa.
+        - generic [ref=e119]: 0 produtos
+      - status [ref=e123]: A carregar produtos…
+    - generic [ref=e124]:
+      - generic [ref=e130]:
+        - paragraph [ref=e131]: Também precisas de ajuda especializada?
+        - heading "Há um profissional certo para o teu próximo projeto." [level=2] [ref=e132]
+        - paragraph [ref=e133]: Explora serviços e liga-te a prestadores e empresas em Angola.
+      - link "Descobrir serviços" [ref=e134] [cursor=pointer]:
+        - /url: /explorar
+    - generic [ref=e137]:
+      - paragraph [ref=e138]: O pagamento e a entrega dos produtos são combinados diretamente com cada empresa.
+      - link "Tens uma empresa? Divulga os teus produtos" [ref=e139] [cursor=pointer]:
+        - /url: /empresa/produtos
+  - button "Open Next.js Dev Tools" [ref=e147] [cursor=pointer]
+  - alert [ref=e151]

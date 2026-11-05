@@ -80,7 +80,7 @@ export default function ExploreScreen() {
               setIsRefreshing(true);
               void loadProviders();
             }}
-            tintColor="#0a7563"
+            tintColor="#2563EB"
           />
         }
         ListHeaderComponent={
@@ -102,7 +102,7 @@ export default function ExploreScreen() {
               />
             </View>
             <Text style={styles.sectionTitle}>Prestadores em destaque</Text>
-            {isLoading ? <ActivityIndicator color="#0a7563" style={styles.loader} /> : null}
+            {isLoading ? <ActivityIndicator color="#2563EB" style={styles.loader} /> : null}
             {error ? (
               <View style={styles.messageCard}>
                 <Text style={styles.errorText}>{error}</Text>
@@ -160,10 +160,10 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#fffdf8" },
+  safeArea: { flex: 1, backgroundColor: "#FFFFFF" },
   listContent: { paddingBottom: 24 },
   hero: {
-    backgroundColor: "#123c35",
+    backgroundColor: "#123B72",
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     paddingHorizontal: 22,
@@ -171,23 +171,23 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
   },
   brand: { color: "#9adbc7", fontSize: 12, fontWeight: "800", letterSpacing: 1.6 },
-  heroTitle: { color: "#fffdf8", fontSize: 32, fontWeight: "800", marginTop: 12 },
+  heroTitle: { color: "#FFFFFF", fontSize: 32, fontWeight: "800", marginTop: 12 },
   heroSubtitle: { color: "#d5e7df", fontSize: 15, lineHeight: 22, marginTop: 6 },
   search: {
-    backgroundColor: "#fffdf8",
+    backgroundColor: "#FFFFFF",
     borderRadius: 14,
-    color: "#183d35",
+    color: "#123B72",
     fontSize: 15,
     marginTop: 20,
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  sectionTitle: { color: "#183d35", fontSize: 20, fontWeight: "800", marginHorizontal: 20, marginTop: 24, marginBottom: 12 },
+  sectionTitle: { color: "#123B72", fontSize: 20, fontWeight: "800", marginHorizontal: 20, marginTop: 24, marginBottom: 12 },
   loader: { marginVertical: 22 },
   providerCard: {
     alignItems: "center",
     backgroundColor: "#ffffff",
-    borderColor: "#e7ece8",
+    borderColor: "#E5E7EB",
     borderRadius: 18,
     borderWidth: 1,
     flexDirection: "row",
@@ -195,19 +195,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     padding: 15,
   },
-  avatar: { alignItems: "center", backgroundColor: "#dff2e9", borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
-  avatarText: { color: "#176653", fontSize: 18, fontWeight: "800" },
+  avatar: { alignItems: "center", backgroundColor: "#EFF6FF", borderRadius: 22, height: 44, justifyContent: "center", width: 44 },
+  avatarText: { color: "#123B72", fontSize: 18, fontWeight: "800" },
   providerDetails: { flex: 1, marginLeft: 12 },
-  providerName: { color: "#183d35", fontSize: 16, fontWeight: "800" },
+  providerName: { color: "#123B72", fontSize: 16, fontWeight: "800" },
   providerDescription: { color: "#61716b", fontSize: 13, lineHeight: 19, marginTop: 4 },
   metaRow: { alignItems: "center", flexDirection: "row", flexWrap: "wrap", marginTop: 9 },
   rating: { color: "#9a6a12", fontSize: 12, fontWeight: "700" },
   metaText: { color: "#718079", fontSize: 11, marginLeft: 5 },
   chevron: { color: "#70847b", fontSize: 26, marginLeft: 8 },
   messageCard: { backgroundColor: "#ffffff", borderRadius: 16, marginHorizontal: 18, padding: 18 },
-  emptyTitle: { color: "#183d35", fontSize: 15, fontWeight: "700" },
+  emptyTitle: { color: "#123B72", fontSize: 15, fontWeight: "700" },
   mutedText: { color: "#61716b", fontSize: 14, marginTop: 6 },
   errorText: { color: "#9f3434", fontSize: 14, marginBottom: 10 },
-  linkText: { color: "#08755f", fontSize: 14, fontWeight: "700" },
+  linkText: { color: "#2563EB", fontSize: 14, fontWeight: "700" },
   footer: { height: 12 },
 });

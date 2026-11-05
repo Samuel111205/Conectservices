@@ -3,22 +3,36 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { Bell, ClipboardList, Heart, MessageCircle } from "lucide-react";
 import EstruturaAutenticacao from "../auth-shell";
+import BusinessLogo from "../components/business-logo";
 import styles from "../auth.module.css";
 
 type Profile = { full_name: string };
-type DashboardSummary = { orders: number; activeOrders: number; bookings: number };
+type DashboardSummary = { favorites: number | null; orders: number | null; messages: number | null; notifications: number | null };
 type Dashboard = {
   client: {
     orders_by_status: Record<string, number>;
+    proposals_received_by_status: Record<string, number>;
     bookings_by_status: Record<string, number>;
   };
 };
 type Atividade = { id: string; titulo: string; detalhe: string; estado: string; data: string; href: string };
 type ApiPage<T> = { results: T[]; next: string | null };
+type CountPage = { count?: number; results?: unknown[] };
 type Order = { id: number; title: string; status: string; created_at: string };
 type Proposal = { id: number; order_id: number; order_title: string; provider_name: string; status: string; created_at: string };
 type Booking = { id: number; order_id: number; provider_name: string; status: string; created_at: string };
+type RecommendedProvider = {
+  id: number;
+  commercial_name: string;
+  description: string;
+  verification_status: string;
+  business_profile?: { logo: string | null } | null;
+  active_service_count: number;
+  average_rating: string | null;
+  review_count: number;
+};
 
 const nomesEstado: Record<string, string> = {
   OPEN: "Aberto", NEGOTIATING: "A receber propostas", AWARDED: "Contratado", COMPLETED: "Concluído", CANCELLED: "Cancelado",
@@ -28,6 +42,10 @@ const nomesEstado: Record<string, string> = {
 
 function formatarData(valor: string) {
   return new Date(valor).toLocaleDateString("pt-AO", { day: "numeric", month: "short" });
+}
+
+function contarItens(pagina: CountPage) {
+  return typeof pagina.count === "number" ? pagina.count : pagina.results?.length ?? 0;
 }
 
 function criarAtividades(pedidos: Order[], propostas: Proposal[], contratacoes: Booking[]) {
@@ -55,7 +73,8 @@ export default function PaginaConta() {
   const [account, setAccount] = useState(false);
   const [erro, definirErro] = useState("");
   const [estaCarregando, definirCarregamento] = useState(true);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [erroMetricas, definirErroMetricas] = useState("");
+  const [erroPrestadores, definirErroPrestadores] = useState("");
   const [nome, setNome] = useState("");
   const [resumo, setResumo] = useState<DashboardSummary | null>(null);
   const [feed, setFeed] = useState<Atividade[]>([]);
@@ -64,6 +83,25 @@ export default function PaginaConta() {
   const [temMaisFeed, definirTemMaisFeed] = useState(false);
   const [aCarregarFeed, definirCarregamentoFeed] = useState(false);
   const [erroFeed, definirErroFeed] = useState("");
+  const [prestadoresEmDestaque, definirPrestadoresEmDestaque] = useState<RecommendedProvider[]>([]);
+
+  useEffect(() => {
+    let ativo = true;
+    fetch("/api/public/providers/discover/?ordering=-rating&page=1", { cache: "no-store" })
+      .then(async (resposta) => {
+        if (!resposta.ok) throw new Error("Não foi possível carregar os prestadores em destaque.");
+        const pagina = await resposta.json() as { results: RecommendedProvider[] };
+        if (ativo) definirPrestadoresEmDestaque(pagina.results.slice(0, 3));
+      })
+      .catch((motivo: unknown) => {
+        if (ativo) {
+          definirErroPrestadores(motivo instanceof Error
+            ? motivo.message
+            : "Não foi possível carregar os prestadores em destaque.");
+        }
+      });
+    return () => { ativo = false; };
+  }, []);
 
   useEffect(() => {
     let ativo = true;
@@ -99,34 +137,63 @@ export default function PaginaConta() {
         ]);
         if (!ativo) return;
         setNome(perfil?.full_name ?? "");
-        const [pedidosHttp, propostasHttp, contratacoesHttp] = await Promise.all([
+        const [
+          pedidosHttp,
+          propostasHttp,
+          contratacoesHttp,
+          favoritosPrestadoresHttp,
+          favoritosServicosHttp,
+          conversasHttp,
+          notificacoesHttp,
+        ] = await Promise.all([
           fetch("/api/auth/orders/", { cache: "no-store" }),
           fetch("/api/auth/proposals/", { cache: "no-store" }),
           fetch("/api/auth/bookings/", { cache: "no-store" }),
+          fetch("/api/auth/favorites/providers/", { cache: "no-store" }),
+          fetch("/api/auth/favorites/services/", { cache: "no-store" }),
+          fetch("/api/auth/conversations/", { cache: "no-store" }),
+          fetch("/api/auth/notifications/unread-count/", { cache: "no-store" }),
         ]);
-        if ([pedidosHttp, propostasHttp, contratacoesHttp].some((response) => response.status === 401)) {
+        if ([pedidosHttp, propostasHttp, contratacoesHttp, favoritosPrestadoresHttp, favoritosServicosHttp, conversasHttp, notificacoesHttp].some((response) => response.status === 401)) {
           navegador.replace("/entrar?next=%2Fconta");
           return;
         }
-        const [pedidos, propostas, contratacoes] = await Promise.all([
+        const [
+          pedidos,
+          propostas,
+          contratacoes,
+          favoritosPrestadores,
+          favoritosServicos,
+          conversas,
+          notificacoes,
+        ] = await Promise.all([
           pedidosHttp.ok ? pedidosHttp.json() as Promise<ApiPage<Order>> : Promise.resolve({ results: [], next: null }),
           propostasHttp.ok ? propostasHttp.json() as Promise<ApiPage<Proposal>> : Promise.resolve({ results: [], next: null }),
           contratacoesHttp.ok ? contratacoesHttp.json() as Promise<ApiPage<Booking>> : Promise.resolve({ results: [], next: null }),
+          favoritosPrestadoresHttp.ok ? favoritosPrestadoresHttp.json() as Promise<CountPage> : Promise.resolve(null),
+          favoritosServicosHttp.ok ? favoritosServicosHttp.json() as Promise<CountPage> : Promise.resolve(null),
+          conversasHttp.ok ? conversasHttp.json() as Promise<CountPage> : Promise.resolve(null),
+          notificacoesHttp.ok ? notificacoesHttp.json() as Promise<{ unread_count?: number }> : Promise.resolve(null),
         ]);
+        if ([favoritosPrestadoresHttp, favoritosServicosHttp, conversasHttp, notificacoesHttp].some((response) => !response.ok)) {
+          definirErroMetricas("Alguns indicadores não estão disponíveis neste momento.");
+        }
         const atividades = criarAtividades(pedidos.results, propostas.results, contratacoes.results);
         if (ativo) {
           setFeed(atividades);
           definirTemMaisFeed(Boolean(pedidos.next || propostas.next || contratacoes.next));
         }
-        if (dashboard?.client) {
-          const pedidos = dashboard.client.orders_by_status;
-          const contratacoes = dashboard.client.bookings_by_status;
-          setResumo({
-            orders: Object.values(pedidos).reduce((soma, count) => soma + count, 0),
-            activeOrders: (pedidos.OPEN ?? 0) + (pedidos.NEGOTIATING ?? 0),
-            bookings: (contratacoes.SCHEDULED ?? 0) + (contratacoes.CONFIRMED ?? 0) + (contratacoes.IN_PROGRESS ?? 0),
-          });
-        }
+        const estadosPedidos = dashboard?.client?.orders_by_status ?? {};
+        setResumo({
+          favorites: favoritosPrestadores && favoritosServicos
+            ? contarItens(favoritosPrestadores) + contarItens(favoritosServicos)
+            : null,
+          orders: dashboard?.client
+            ? Object.values(estadosPedidos).reduce((soma, count) => soma + count, 0)
+            : null,
+          messages: conversas ? contarItens(conversas) : null,
+          notifications: typeof notificacoes?.unread_count === "number" ? notificacoes.unread_count : null,
+        });
       })
       .catch(() => {
         if (ativo) definirErro("Não foi possível contactar o serviço.");
@@ -186,29 +253,8 @@ export default function PaginaConta() {
     }
   }
 
-  async function terminarSessao() {
-    setIsLoggingOut(true);
-    definirErro("");
-    try {
-      const respostaHttp = await fetch("/api/auth/logout/", { method: "POST" });
-      if (!respostaHttp.ok) {
-        const dadosRecebidos = await respostaHttp.json().catch(() => null);
-        definirErro(
-          typeof dadosRecebidos?.detail === "string"
-            ? `${dadosRecebidos.detail} A sessão local foi terminada.`
-            : "A sessão local foi terminada, mas a API não confirmou a invalidação.",
-        );
-      }
-      navegador.replace("/");
-    } catch {
-      definirErro("Não foi possível contactar o serviço para terminar a sessão.");
-    } finally {
-      setIsLoggingOut(false);
-    }
-  }
-
   return (
-    <EstruturaAutenticacao account>
+    <EstruturaAutenticacao account profileName={nome}>
       <p className={styles.eyebrow}>Feed da comunidade</p>
       <h1>{nome ? `Olá, ${nome.split(" ")[0]}` : "O teu feed"}</h1>
       {estaCarregando ? (
@@ -218,8 +264,41 @@ export default function PaginaConta() {
       ) : account ? (
         <>
           <p className={styles.intro}>
-            Acompanha as atualizações dos teus pedidos, propostas e serviços.
+            Acompanha os teus pedidos e encontra profissionais para o que precisares.
           </p>
+          <div className={styles.dashboardStats} aria-label="Resumo da atividade">
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="rose"><Heart size={19} aria-hidden="true" /></span><strong>{resumo?.favorites ?? "—"}</strong><span>Favoritos</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="blue"><ClipboardList size={19} aria-hidden="true" /></span><strong>{resumo?.orders ?? "—"}</strong><span>Pedidos</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="violet"><MessageCircle size={19} aria-hidden="true" /></span><strong>{resumo?.messages ?? "—"}</strong><span>Mensagens</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="amber"><Bell size={19} aria-hidden="true" /></span><strong>{resumo?.notifications ?? "—"}</strong><span>Notificações</span></div>
+          </div>
+          {erroMetricas && <p className={styles.profileHint} role="status">{erroMetricas}</p>}
+          <section className={styles.dashboardSection} id="destaques" aria-labelledby="prestadores-destaque">
+            <div className={styles.feedHeading}>
+              <div><p className={styles.eyebrow}>Descobre na comunidade</p><h2 id="prestadores-destaque">Prestadores em destaque</h2></div>
+              <Link href="/explorar">Ver todos</Link>
+            </div>
+            {prestadoresEmDestaque.length ? <div className={styles.featuredProviders}>
+              {prestadoresEmDestaque.map((prestador) => <article className={styles.featuredProvider} key={prestador.id}>
+                <BusinessLogo
+                  className={styles.featuredImage}
+                  companyName={prestador.commercial_name}
+                  logoUrl={prestador.business_profile?.logo}
+                  width={72}
+                  height={72}
+                />
+                <div>
+                  <strong>{prestador.commercial_name}</strong>
+                  <small>{prestador.description || "Prestador de serviços em Angola."}</small>
+                  <span className={styles.featuredMeta}>{prestador.average_rating ? `★ ${prestador.average_rating} · ${prestador.review_count} avaliações` : "Novo prestador"} · {prestador.active_service_count} serviços</span>
+                  <span className={styles.featuredCategory}>{prestador.verification_status === "VERIFIED" ? "Prestador verificado" : "Serviços em destaque"}</span>
+                </div>
+                <Link href={`/prestadores/${prestador.id}`}>Ver perfil</Link>
+              </article>)}
+            </div> : <p className={styles.profileHint} role={erroPrestadores ? "alert" : undefined}>
+              {erroPrestadores || "Os profissionais disponíveis aparecerão aqui."}
+            </p>}
+          </section>
           <section className={styles.feedSection} aria-labelledby="atividade-recente">
             <div className={styles.feedHeading}>
               <div><p className={styles.eyebrow}>A tua rede</p><h2 id="atividade-recente">Atividade recente</h2></div>
@@ -252,13 +331,6 @@ export default function PaginaConta() {
               </div>
             )}
           </section>
-          {resumo && (
-            <div className={styles.dashboardStats} aria-label="Resumo da atividade">
-              <div><strong>{resumo.orders}</strong><span>Pedidos criados</span></div>
-              <div><strong>{resumo.activeOrders}</strong><span>A receber propostas</span></div>
-              <div><strong>{resumo.bookings}</strong><span>Contratações em curso</span></div>
-            </div>
-          )}
           <section className={styles.dashboardSection} aria-labelledby="cliente-acoes">
             <h2 id="cliente-acoes">O que queres fazer?</h2>
             <div className={styles.dashboardLinks}>
@@ -281,14 +353,6 @@ export default function PaginaConta() {
             <Link className={styles.secondary} href="/contratacoes">
               Contratações
             </Link>
-            <button
-              className={styles.secondary}
-              type="button"
-              disabled={isLoggingOut}
-              onClick={terminarSessao}
-            >
-              {isLoggingOut ? "A terminar…" : "Terminar sessão"}
-            </button>
           </div>
         </>
       ) : (

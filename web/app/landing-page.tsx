@@ -30,6 +30,7 @@ type Provider = {
   id: number;
   commercial_name: string;
   description: string;
+  verification_status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
   business_profile: {
     logo: string;
     website: string;
@@ -74,27 +75,35 @@ const imagensFundoHero = [
 const categoriasSugeridas = [
   {
     name: "Tecnologia e informática",
-    description: "Reparação, suporte e soluções digitais",
+    description: "Suporte e soluções digitais",
   },
   {
-    name: "Reparações e manutenção",
-    description: "Assistência técnica para o dia a dia",
+    name: "Construção e reparações",
+    description: "Obras, manutenção e assistência",
   },
   {
-    name: "Consultoria",
-    description: "Apoio para pessoas e empresas",
+    name: "Saúde e bem-estar",
+    description: "Cuidados para si e para a família",
   },
   {
-    name: "Design e marketing",
-    description: "Marcas, conteúdos e divulgação",
+    name: "Beleza e estética",
+    description: "Cuidados pessoais e beleza",
+  },
+  {
+    name: "Transporte e logística",
+    description: "Entregas, mudanças e transporte",
   },
   {
     name: "Educação e formação",
     description: "Aulas, explicações e cursos",
   },
   {
-    name: "Limpeza e organização",
+    name: "Limpeza",
     description: "Soluções para casa e escritório",
+  },
+  {
+    name: "Consultoria e serviços empresariais",
+    description: "Apoio especializado para negócios",
   },
 ];
 
@@ -385,10 +394,13 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                 Empresas
               </a>
               <a href="#prestadores" onClick={() => definirMenuMovelAberto(false)}>
-                Prestadores
+                Profissionais
               </a>
               <a href="#como-funciona" onClick={() => definirMenuMovelAberto(false)}>
                 Como funciona
+              </a>
+              <a href="#sobre" onClick={() => definirMenuMovelAberto(false)}>
+                Sobre nós
               </a>
             </nav>
 
@@ -436,11 +448,11 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                 Serviços locais, ligações de confiança
               </div>
               <h1>
-                Encontre os melhores serviços em <span>Angola.</span>
+                Encontra os serviços de que precisas, num só lugar.
               </h1>
               <p className={styles.heroDescription}>
-                Conectamos clientes, pequenas e médias empresas e prestadores de
-                serviços, num só lugar.
+                Descobre empresas e profissionais em Angola, compara opções e
+                entra directamente em contacto com quem pode ajudar.
               </p>
               <form
                 className={styles.searchPanel}
@@ -490,7 +502,7 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                 </div>
               )}
               <div className={styles.searchExamples}>
-                <span>Exemplos:</span>
+                <span>Pesquisas populares:</span>
                 {categoriasSugeridas.slice(0, 6).map((categoria) => (
                   <button
                     key={categoria.name}
@@ -522,9 +534,9 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                 <div className={styles.sectionKicker}>Explore por categoria</div>
                 <h2>O que você precisa hoje?</h2>
               </div>
-              <a href="#prestadores" className={styles.textLink}>
+              <Link href="/categorias" className={styles.textLink}>
                 Ver todos <Icone name="arrow" size={16} />
-              </a>
+              </Link>
             </div>
             <div className={styles.categoryList}>
               {categoriasVisiveis.map((categoria, index) => {
@@ -588,7 +600,7 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                 <span className={styles.statusIcon}>!</span>
                 <div>
                   <strong>Não foi possível carregar os prestadores.</strong>
-                  <p>A API não respondeu como esperado. Verifique a ligação e tente novamente.</p>
+                  <p>{erroNaPesquisa}</p>
                 </div>
                 <button type="button" onClick={() => {
                   definirCarregamento(true);
@@ -619,7 +631,9 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
                         )}
                         <div className={styles.providerBadges}>
                           {prestador.business_profile && <span className={styles.providerType}>Empresa</span>}
+                          {prestador.verification_status === "VERIFIED" && (
                           <span className={styles.providerVerified}><span /> Verificado</span>
+                          )}
                         </div>
                       </div>
                       <h3>{prestador.commercial_name}</h3>
@@ -663,7 +677,7 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
           </section>
 
           <section className={styles.howItWorks} id="como-funciona" aria-labelledby="how-it-works-title">
-            <div className={styles.howItWorksIntro}>
+            <div className={styles.howItWorksIntro} id="sobre">
               <span>Como funciona</span>
               <h2 id="how-it-works-title">Encontre, compare e entre em contacto.</h2>
               <p>A plataforma aproxima clientes, empresas e profissionais. O contacto e os detalhes do serviço são combinados diretamente entre as partes.</p>
@@ -684,6 +698,34 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
             </ol>
           </section>
 
+          <section className={styles.benefits} aria-labelledby="benefits-title">
+            <div className={styles.benefitsHeading}>
+              <span>Uma plataforma para todos</span>
+              <h2 id="benefits-title">Boas ligações fazem a diferença.</h2>
+              <p>Encontre quem precisa ou faça o seu trabalho chegar a mais pessoas em Angola.</p>
+            </div>
+            <div className={styles.benefitGrid}>
+              <article className={styles.benefitCard}>
+                <span aria-hidden="true">⌕</span>
+                <h3>Para clientes</h3>
+                <p>Compare opções, explore perfis e contacte profissionais para o serviço de que precisa.</p>
+                <Link href="/explorar">Encontrar um serviço <Icone name="arrow" size={16} /></Link>
+              </article>
+              <article className={styles.benefitCard}>
+                <span aria-hidden="true">▦</span>
+                <h3>Para empresas</h3>
+                <p>Apresente os seus serviços e facilite o contacto com novos clientes.</p>
+                <Link href="/empresa">Conhecer a área da empresa <Icone name="arrow" size={16} /></Link>
+              </article>
+              <article className={styles.benefitCard}>
+                <span aria-hidden="true">✳</span>
+                <h3>Para profissionais</h3>
+                <p>Crie o seu perfil profissional e divulgue as competências que oferece.</p>
+                <Link href="/perfil">Criar perfil profissional <Icone name="arrow" size={16} /></Link>
+              </article>
+            </div>
+          </section>
+
           <section className={styles.finalCta} id="tornar-prestador">
             <div>
               <span>Conect Services</span>
@@ -699,7 +741,8 @@ export default function PaginaInicial({ appMode = false }: { appMode?: boolean }
 
           <footer className={styles.footer}>
             <Link className={styles.footerBrand} href={appMode ? "/conta" : "/"}>Conect Services</Link>
-            <span>Ligando pessoas, profissionais e empresas em Angola.</span>
+            <span>Conectando o mundo, movendo o futuro.</span>
+            <span>Termos · Privacidade</span>
             <span>© {new Date().getFullYear()} Conect Services</span>
           </footer>
         </div>

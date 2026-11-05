@@ -11,7 +11,7 @@ const endpointsPermitidos = new Set([
   "availability",
   "products",
 ]);
-const endpointsDeAutenticacao = new Set([
+const endpointsPostPermitidos = new Set([
   "auth/verify-email",
   "auth/verify-email/resend",
   "auth/password-reset",
@@ -76,7 +76,7 @@ export async function POST(
 ) {
   const { path } = await contexto.params;
   const endpoint = path.join("/");
-  if (!endpointsDeAutenticacao.has(endpoint)) {
+  if (!endpointsPostPermitidos.has(endpoint)) {
     return NextResponse.json({ detail: "Recurso não encontrado." }, { status: 404 });
   }
   try {

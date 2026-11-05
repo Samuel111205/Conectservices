@@ -28,4 +28,4 @@ export default function Root({ children }: { children: ReactNode }) {
   );
 }
 
-const responsiveBackground = `body { background-color: #fffdf8; }`;
+const responsiveBackground = `body { background-color: #FFFFFF; }`;

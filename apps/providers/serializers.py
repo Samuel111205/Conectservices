@@ -23,6 +23,7 @@ class ProviderDiscoverySerializer(serializers.ModelSerializer):
             "id",
             "commercial_name",
             "description",
+            "verification_status",
             "business_profile",
             "active_service_count",
             "average_rating",

@@ -54,19 +54,19 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: "#fffdf8", flex: 1 },
+  safeArea: { backgroundColor: "#FFFFFF", flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 30 },
-  eyebrow: { color: "#0a7563", fontSize: 12, fontWeight: "800", letterSpacing: 1.4 },
-  title: { color: "#183d35", fontSize: 29, fontWeight: "800", marginTop: 10 },
+  eyebrow: { color: "#2563EB", fontSize: 12, fontWeight: "800", letterSpacing: 1.4 },
+  title: { color: "#123B72", fontSize: 29, fontWeight: "800", marginTop: 10 },
   subtitle: { color: "#61716b", fontSize: 14, lineHeight: 21, marginTop: 6 },
-  label: { color: "#28493f", fontSize: 14, fontWeight: "700", marginTop: 20, marginBottom: 8 },
+  label: { color: "#374151", fontSize: 14, fontWeight: "700", marginTop: 20, marginBottom: 8 },
   optional: { color: "#718079", fontSize: 12, fontWeight: "400" },
-  input: { backgroundColor: "#ffffff", borderColor: "#dce6df", borderRadius: 13, borderWidth: 1, color: "#183d35", fontSize: 15, paddingHorizontal: 14, paddingVertical: 14 },
+  input: { backgroundColor: "#ffffff", borderColor: "#D1D5DB", borderRadius: 13, borderWidth: 1, color: "#123B72", fontSize: 15, paddingHorizontal: 14, paddingVertical: 14 },
   error: { color: "#a12f37", fontSize: 14, lineHeight: 20, marginTop: 14 },
-  button: { alignItems: "center", backgroundColor: "#0a7563", borderRadius: 13, marginTop: 24, paddingVertical: 15 },
+  button: { alignItems: "center", backgroundColor: "#2563EB", borderRadius: 13, marginTop: 24, paddingVertical: 15 },
   buttonText: { color: "#ffffff", fontSize: 15, fontWeight: "800" },
   pressed: { opacity: 0.85 },
   disabled: { opacity: 0.5 },
   footer: { alignItems: "center", flexDirection: "row", justifyContent: "center", marginTop: 22 },
-  link: { color: "#08755f", fontSize: 14, fontWeight: "800" },
+  link: { color: "#2563EB", fontSize: 14, fontWeight: "800" },
 });

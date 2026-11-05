@@ -15,7 +15,7 @@ Notifications.setNotificationHandler({
 export default function RootLayout() {
   return (
     <SessionProvider>
-      <Stack screenOptions={{ headerTintColor: "#123c35" }}>
+      <Stack screenOptions={{ headerTintColor: "#123B72" }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="entrar" options={{ title: "Entrar" }} />
         <Stack.Screen name="registar" options={{ title: "Criar conta" }} />

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ApiRequestError, requisitarJson } from "@/lib/api-client";
 import BusinessLogo from "@/app/components/business-logo";
+import ListingViewTracker from "@/app/components/listing-view-tracker";
 import styles from "./marketplace-details.module.css";
 
 type ApiPage<T> = { results: T[] };
@@ -271,7 +272,12 @@ export function ProviderDetails({ providerId }: { providerId: string }) {
       <CabecalhoMarketplace />
       <div className={styles.content}>
         <Link className={styles.breadcrumb} href="/explorar">← Voltar ao marketplace</Link>
-        {erro ? <EstadoErro mensagem={erro} /> : dados ? <PerfilPrestador dados={dados} /> : <EstadoCarregamento texto="A carregar perfil, serviços e avaliações…" />}
+        {erro ? <EstadoErro mensagem={erro} /> : dados ? (
+          <>
+            <ListingViewTracker listingType="PROVIDER" listingId={dados.provider.id} />
+            <PerfilPrestador dados={dados} />
+          </>
+        ) : <EstadoCarregamento texto="A carregar perfil, serviços e avaliações…" />}
       </div>
     </main>
   );
@@ -314,6 +320,7 @@ export function ServiceDetails({ serviceId }: { serviceId: string }) {
         <Link className={styles.breadcrumb} href="/explorar">← Voltar ao marketplace</Link>
         {erro ? <EstadoErro mensagem={erro} /> : service && provider ? (
           <>
+            <ListingViewTracker listingType="SERVICE" listingId={service.id} />
             <section className={styles.serviceHero}>
               <p className={styles.eyebrow}>{categoryName}</p>
               <h1>{service.name}</h1>

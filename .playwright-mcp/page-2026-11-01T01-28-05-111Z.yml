@@ -1,0 +1,39 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e5]:
+      - link "Conect Services — início" [ref=e7] [cursor=pointer]:
+        - /url: /
+        - generic [aria-hidden] [ref=e8]: C
+        - generic [ref=e9]:
+          - text: conect.
+          - generic [ref=e10]: services
+      - generic "Acesso à conta" [ref=e11]:
+        - link "Entrar" [ref=e12] [cursor=pointer]:
+          - /url: /entrar
+        - link "Registar" [ref=e13] [cursor=pointer]:
+          - /url: /registar
+      - paragraph [ref=e14]: Acede à tua conta
+      - heading "Bem-vindo de volta!" [level=1] [ref=e15]
+      - paragraph [ref=e16]: Acede à tua conta para continuares a usar a Conect Services.
+      - generic [ref=e17]:
+        - generic [ref=e18]:
+          - text: Email
+          - textbox "Email" [ref=e19]:
+            - /placeholder: Digite o seu email
+        - generic [ref=e20]:
+          - text: Palavra-passe
+          - generic [ref=e21]:
+            - textbox "Palavra-passe Mostrar palavra-passe" [ref=e22]
+            - button "Mostrar palavra-passe" [ref=e23] [cursor=pointer]: Mostrar
+        - button "Entrar" [ref=e24] [cursor=pointer]
+      - paragraph [ref=e25]:
+        - link "Esqueceste-te da palavra-passe?" [ref=e26] [cursor=pointer]:
+          - /url: /recuperar-acesso
+      - paragraph [ref=e27]:
+        - text: Ainda não tens conta?
+        - link "Criar conta" [ref=e28] [cursor=pointer]:
+          - /url: /registar
+      - link "Voltar à página inicial" [ref=e29] [cursor=pointer]:
+        - /url: /
+  - button "Open Next.js Dev Tools" [ref=e35] [cursor=pointer]
+  - alert [ref=e39]

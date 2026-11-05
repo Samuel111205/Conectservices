@@ -323,7 +323,11 @@ export default function PaginaPerfil() {
     documentos.length > 0;
 
   return (
-    <EstruturaAutenticacao account>
+    <EstruturaAutenticacao
+      account
+      area={prestador ? "provider" : "client"}
+      profileName={prestador?.commercial_name ?? perfilAtual?.full_name}
+    >
       <p className={styles.eyebrow}>Personalização</p>
       <h1>Os teus perfis</h1>
       <p className={styles.intro}>
@@ -339,7 +343,7 @@ export default function PaginaPerfil() {
           {erro}
         </p>
       ) : (
-        <div className={styles.profileSections}>
+        <div className={styles.profileSections} id="profile-settings">
           <section className={styles.profileSection}>
             <div className={styles.profileHeading}>
               <h2>Perfil pessoal</h2>

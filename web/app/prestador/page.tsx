@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { BriefcaseBusiness, ClipboardList, MessageCircle, Star } from "lucide-react";
+import AvailabilityWidget from "../availability-widget";
+import AnalyticsPanel from "@/app/components/analytics-panel";
 import EstruturaAutenticacao from "../auth-shell";
 import styles from "../auth.module.css";
 
@@ -11,7 +14,7 @@ type Provider = {
   verification_status: "PENDING" | "VERIFIED" | "REJECTED" | "SUSPENDED";
   verification_feedback: string;
 };
-type Summary = { opportunities: number; proposals: number; services: number };
+type Summary = { opportunities: number; proposals: number; services: number; bookings: number; rating: string | null; reviews: number };
 type Atividade = { id: string; titulo: string; detalhe: string; estado: string; data: string; href: string };
 type Proposal = { id: number; order_id: number; order_title: string; status: string; created_at: string };
 type Booking = { id: number; order_id: number; status: string; created_at: string };
@@ -21,6 +24,8 @@ type Dashboard = {
   provider: {
     services: { active: number; inactive: number };
     proposals_by_status: Record<string, number>;
+    bookings_by_status?: Record<string, number>;
+    reviews?: { average_rating: string | null; count: number };
   } | null;
 };
 
@@ -99,6 +104,9 @@ export default function PainelPrestador() {
           .filter(([status]) => status !== "CANCELLED")
           .reduce((sum, [, count]) => sum + count, 0) : 0,
         services: business?.services.active ?? 0,
+        bookings: business?.bookings_by_status ? Object.values(business.bookings_by_status).reduce((sum, count) => sum + count, 0) : 0,
+        rating: business?.reviews?.average_rating ?? null,
+        reviews: business?.reviews?.count ?? 0,
       });
       setFeed(providerData ? [
         ...proposals.results.map((proposal) => ({
@@ -136,18 +144,32 @@ export default function PainelPrestador() {
   }, [router]);
 
   return (
-    <EstruturaAutenticacao account>
+    <EstruturaAutenticacao account area="provider" profileName={provider?.commercial_name}>
       <p className={styles.eyebrow}>Área profissional</p>
       <h1>{provider?.commercial_name ? `Olá, ${provider.commercial_name}` : "Painel do prestador"}</h1>
-      <p className={styles.intro}>Acompanha oportunidades, propostas e serviços da tua atividade.</p>
+      <p className={styles.intro}>Acompanha o teu desempenho e gere os serviços que apresentas aos clientes.</p>
       {loading ? <p className={styles.intro} aria-live="polite">A carregar o teu painel…</p> : (
         <>
           {error && <p className={styles.notice} role="status">{error}</p>}
+          <section className={styles.providerWelcome}>
+            <span className={styles.providerWelcomeAvatar}>{provider?.commercial_name?.slice(0, 1).toLocaleUpperCase("pt-AO") ?? "P"}</span>
+            <div><span>Perfil profissional</span><strong>{provider?.commercial_name ?? "Completa o teu perfil"}</strong><small>Angola · Serviços e oportunidades</small></div>
+            {provider && <span className={styles.providerWelcomeStatus} data-status={provider.verification_status}>{estados[provider.verification_status]}</span>}
+            <Link href="/perfil">Editar perfil</Link>
+          </section>
+          {summary && <div className={styles.dashboardStats} aria-label="Resumo da atividade">
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="blue"><BriefcaseBusiness size={19} aria-hidden="true" /></span><strong>{summary.services}</strong><span>Serviços publicados</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="violet"><ClipboardList size={19} aria-hidden="true" /></span><strong>{summary.opportunities}</strong><span>Pedidos disponíveis</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="blue"><MessageCircle size={19} aria-hidden="true" /></span><strong>{summary.proposals}</strong><span>Propostas enviadas</span></div>
+            <div className={styles.metricCard}><span className={styles.metricIcon} data-tone="amber"><Star size={19} aria-hidden="true" /></span><strong>{summary.rating ?? "—"}</strong><span>Avaliação média · {summary.reviews} avaliações</span></div>
+          </div>}
           {provider && <div className={styles.providerStatus}>
             <span>Estado do perfil profissional</span>
             <strong data-status={provider.verification_status}>{estados[provider.verification_status]}</strong>
             {provider.verification_status === "REJECTED" && provider.verification_feedback && <p>{provider.verification_feedback}</p>}
           </div>}
+          {provider && <AnalyticsPanel />}
+          {provider && <AvailabilityWidget />}
           <section className={styles.feedSection} aria-labelledby="atividade-prestador">
             <div className={styles.feedHeading}>
               <div><p className={styles.eyebrow}>A tua rede</p><h2 id="atividade-prestador">Atividade recente</h2></div>
@@ -168,11 +190,6 @@ export default function PainelPrestador() {
               <Link href="/perfil">Completar perfil profissional</Link>
             </div>}
           </section>
-          {summary && <div className={styles.dashboardStats} aria-label="Resumo da atividade">
-            <div><strong>{summary.opportunities}</strong><span>Oportunidades disponíveis</span></div>
-            <div><strong>{summary.proposals}</strong><span>Propostas enviadas</span></div>
-            <div><strong>{summary.services}</strong><span>Serviços ativos</span></div>
-          </div>}
           <section className={styles.dashboardSection} aria-labelledby="prestador-acoes">
             <h2 id="prestador-acoes">Gerir a tua atividade</h2>
             <div className={styles.dashboardLinks}>

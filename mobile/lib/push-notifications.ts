@@ -27,7 +27,7 @@ export async function registerPushNotifications() {
       name: "Mensagens",
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: "#0a7563",
+      lightColor: "#2563EB",
     });
   }
   const existing = await Notifications.getPermissionsAsync();

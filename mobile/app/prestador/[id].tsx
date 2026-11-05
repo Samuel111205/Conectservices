@@ -81,7 +81,7 @@ export default function ProviderScreen() {
         </View>
 
         <Text style={styles.sectionTitle}>Serviços</Text>
-        {isLoading ? <ActivityIndicator color="#0a7563" style={styles.loader} /> : null}
+        {isLoading ? <ActivityIndicator color="#2563EB" style={styles.loader} /> : null}
         {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
         {!isLoading && !error && services.length === 0 ? (
           <Text style={styles.muted}>Este prestador ainda não tem serviços publicados.</Text>
@@ -103,22 +103,22 @@ export default function ProviderScreen() {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { backgroundColor: "#fffdf8", flex: 1 },
+  safeArea: { backgroundColor: "#FFFFFF", flex: 1 },
   content: { padding: 18, paddingBottom: 32 },
-  providerCard: { alignItems: "center", backgroundColor: "#123c35", borderRadius: 22, padding: 22 },
-  avatar: { alignItems: "center", backgroundColor: "#dff2e9", borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
-  avatarText: { color: "#176653", fontSize: 24, fontWeight: "800" },
-  name: { color: "#fffdf8", fontSize: 23, fontWeight: "800", marginTop: 12, textAlign: "center" },
+  providerCard: { alignItems: "center", backgroundColor: "#123B72", borderRadius: 22, padding: 22 },
+  avatar: { alignItems: "center", backgroundColor: "#EFF6FF", borderRadius: 30, height: 60, justifyContent: "center", width: 60 },
+  avatarText: { color: "#123B72", fontSize: 24, fontWeight: "800" },
+  name: { color: "#FFFFFF", fontSize: 23, fontWeight: "800", marginTop: 12, textAlign: "center" },
   description: { color: "#61716b", fontSize: 14, lineHeight: 21, marginTop: 6 },
   providerDescription: { color: "#d5e7df", fontSize: 14, lineHeight: 21, marginTop: 6, textAlign: "center" },
   rating: { color: "#f2ce82", fontSize: 13, fontWeight: "700", marginTop: 12 },
-  sectionTitle: { color: "#183d35", fontSize: 20, fontWeight: "800", marginTop: 24, marginBottom: 12 },
+  sectionTitle: { color: "#123B72", fontSize: 20, fontWeight: "800", marginTop: 24, marginBottom: 12 },
   loader: { marginVertical: 22 },
-  serviceCard: { backgroundColor: "#ffffff", borderColor: "#e7ece8", borderRadius: 17, borderWidth: 1, marginBottom: 12, padding: 16 },
-  serviceName: { color: "#183d35", fontSize: 16, fontWeight: "800" },
-  price: { color: "#08755f", fontSize: 15, fontWeight: "800", marginTop: 12 },
+  serviceCard: { backgroundColor: "#ffffff", borderColor: "#E5E7EB", borderRadius: 17, borderWidth: 1, marginBottom: 12, padding: 16 },
+  serviceName: { color: "#123B72", fontSize: 16, fontWeight: "800" },
+  price: { color: "#2563EB", fontSize: 15, fontWeight: "800", marginTop: 12 },
   duration: { color: "#718079", fontSize: 12, marginTop: 5 },
   muted: { color: "#61716b", fontSize: 14, lineHeight: 21 },
   error: { color: "#a12f37", fontSize: 14, lineHeight: 20 },
-  accountLink: { color: "#08755f", fontSize: 14, fontWeight: "700", marginTop: 16, textAlign: "center" },
+  accountLink: { color: "#2563EB", fontSize: 14, fontWeight: "700", marginTop: 16, textAlign: "center" },
 });

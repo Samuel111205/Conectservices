@@ -133,6 +133,81 @@
   color: #a0aaa2;
 }
 
+.passwordField {
+  position: relative;
+  display: block;
+}
+
+.passwordField input { padding-right: 82px; }
+
+.passwordToggle {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  color: #1769aa;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.accountTypeFieldset {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.accountTypeFieldset legend {
+  margin-bottom: 10px;
+  color: #333944;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.accountTypeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.accountTypeOption,
+.accountTypeSelected {
+  display: grid;
+  min-height: 82px;
+  align-content: start;
+  gap: 5px;
+  padding: 11px;
+  border: 1px solid #d9e5f2;
+  border-radius: 10px;
+  background: #fff;
+  color: #35465d;
+  cursor: pointer;
+  text-align: left;
+}
+
+.accountTypeOption strong,
+.accountTypeSelected strong { font-size: 11px; }
+.accountTypeOption span,
+.accountTypeSelected span { color: #738078; font-size: 10px; line-height: 1.4; }
+
+.accountTypeSelected {
+  border-color: #2563eb;
+  background: #eff6ff;
+  box-shadow: 0 0 0 1px #2563eb inset;
+}
+
+.accountTypeHint {
+  margin: 0;
+  color: #738078;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
 .submit {
   display: flex;
   min-height: 49px;
@@ -453,6 +528,11 @@
 }
 
 @media (max-width: 540px) {
+  .accountTypeGrid { grid-template-columns: 1fr; }
+
+  .accountTypeOption,
+  .accountTypeSelected { min-height: 0; }
+
   .dashboardStats {
     grid-template-columns: 1fr;
   }
@@ -1981,7 +2061,562 @@
   }
 }
 
+/* Reference-aligned login and profile workspaces */
+.authPage {
+  min-height: 100vh;
+  padding: 0;
+  background: #f3f4f6;
+}
+
+.authLayout {
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: minmax(360px, 0.92fr) minmax(420px, 1.08fr);
+  background: #fff;
+}
+
+.authShowcase {
+  position: relative;
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  padding: clamp(30px, 5vw, 76px);
+  background:
+    linear-gradient(180deg, rgb(18 59 114 / 88%), rgb(5 34 70 / 94%)),
+    radial-gradient(ellipse at 70% 80%, #2563eb 0, transparent 46%),
+    #123b72;
+  color: #fff;
+}
+
+.authShowcase::before,
+.authShowcase::after {
+  position: absolute;
+  right: -8%;
+  bottom: -7%;
+  left: -6%;
+  height: 38%;
+  background: linear-gradient(180deg, #1a4f89, #092c55);
+  clip-path: polygon(0 56%, 8% 56%, 8% 30%, 15% 30%, 15% 48%, 22% 48%, 22% 13%, 30% 13%, 30% 44%, 37% 44%, 37% 23%, 46% 23%, 46% 52%, 53% 52%, 53% 4%, 62% 4%, 62% 45%, 69% 45%, 69% 20%, 78% 20%, 78% 46%, 85% 46%, 85% 28%, 92% 28%, 92% 50%, 100% 50%, 100% 100%, 0 100%);
+  content: "";
+  opacity: 0.7;
+}
+
+.authShowcase::after {
+  right: -5%;
+  bottom: -12%;
+  left: -5%;
+  height: 27%;
+  background: linear-gradient(180deg, #0e477c, #041e3a);
+  transform: scaleX(-1);
+  opacity: 0.85;
+}
+
+.authShowcase > *,
+.authShowcaseCopy,
+.authShowcase ul {
+  position: relative;
+  z-index: 1;
+}
+
+.authShowcase .brand { color: #fff; }
+.authShowcase .brandMark { background: #fff; color: #2563eb; }
+.authShowcase .brand small { color: #c8d9f1; }
+
+.authShowcaseCopy {
+  max-width: 500px;
+  margin: auto 0;
+}
+
+.authShowcaseCopy > p {
+  margin: 0 0 14px;
+  color: #b8d4ff;
+  font-size: 13px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.authShowcaseCopy h2 {
+  max-width: 480px;
+  margin: 0 0 18px;
+  font-size: clamp(30px, 4vw, 48px);
+  line-height: 1.1;
+  letter-spacing: -1.5px;
+}
+
+.authShowcaseCopy > span {
+  display: block;
+  max-width: 400px;
+  color: #e1ebf8;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.authShowcase ul {
+  display: grid;
+  gap: 13px;
+  margin: 0 0 34px;
+  padding: 0;
+  list-style: none;
+}
+
+.authShowcase li { display: flex; align-items: center; gap: 11px; color: #f2f7ff; font-size: 14px; }
+.authShowcase li span { display: grid; width: 25px; height: 25px; place-items: center; border: 1px solid #85b8ff; border-radius: 50%; color: #b9d8ff; }
+.authShowcase > small { color: #c8d9f1; font-size: 11px; }
+
+.authFormPane { display: grid; min-height: 100vh; place-items: center; padding: 36px; }
+.authFormInner { width: min(480px, 100%); }
+.authMobileBrand { display: none; margin-bottom: 34px; }
+.authFormInner > h1 { margin: 0; color: #123b72; font-size: clamp(28px, 3vw, 38px); letter-spacing: -1px; }
+.authFormInner > .intro { margin-bottom: 26px; }
+.authFormInner > .form { margin-top: 25px; }
+.authFormInner > .switch { text-align: center; }
+.authFormInner > .homeLink { display: block; margin-top: 20px; text-align: center; }
+
+.loginPage {
+  background:
+    radial-gradient(ellipse at 87% 14%, rgb(101 163 255 / 15%), transparent 29rem),
+    #f4f7fc;
+}
+
+.loginPage .authLayout {
+  grid-template-columns: minmax(0, 0.96fr) minmax(480px, 1.04fr);
+  overflow: hidden;
+  background: #f9fbff;
+}
+
+.loginShowcase {
+  isolation: isolate;
+  background:
+    linear-gradient(140deg, rgb(8 25 51 / 92%), rgb(10 47 93 / 92%) 53%, rgb(0 90 190 / 84%)),
+    radial-gradient(ellipse at 12% 18%, #2379ed 0, transparent 38%),
+    #0a192f;
+}
+
+.loginShowcase::before {
+  z-index: -1;
+  height: 38%;
+  background:
+    linear-gradient(180deg, rgb(48 111 185 / 45%), rgb(3 23 48 / 80%)),
+    linear-gradient(90deg, transparent, rgb(69 147 236 / 15%), transparent);
+  opacity: 0.8;
+}
+
+.loginShowcase::after {
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(16 77 143 / 54%), rgb(3 24 48 / 92%));
+}
+
+.loginOrbs {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.loginOrbs span {
+  position: absolute;
+  width: clamp(180px, 24vw, 340px);
+  aspect-ratio: 1;
+  border: 1px solid rgb(187 218 255 / 16%);
+  border-radius: 50%;
+  background: radial-gradient(circle at 34% 31%, rgb(92 168 255 / 28%), rgb(38 113 228 / 8%) 50%, transparent 72%);
+  box-shadow: inset 0 0 55px rgb(136 190 255 / 8%), 0 0 75px rgb(48 139 255 / 12%);
+  animation: loginFloat 15s ease-in-out infinite alternate;
+}
+
+.loginOrbs span:nth-child(1) { top: 8%; right: -9%; }
+.loginOrbs span:nth-child(2) { right: 24%; bottom: 8%; width: clamp(120px, 17vw, 230px); animation-delay: -5s; }
+.loginOrbs span:nth-child(3) { top: 38%; left: -18%; width: clamp(150px, 19vw, 270px); animation-delay: -9s; }
+
+.loginShowcase > .brand {
+  animation: loginRise 700ms both;
+}
+
+.loginShowcaseCopy {
+  animation: loginRise 850ms 100ms both;
+}
+
+.loginShowcaseCopy h2 {
+  max-width: 560px;
+  font-size: clamp(34px, 4.25vw, 58px);
+  letter-spacing: -2px;
+}
+
+.loginShowcaseCopy > span {
+  max-width: 440px;
+}
+
+.loginShowcase ul {
+  margin-bottom: 20px;
+}
+
+.loginShowcase li {
+  animation: loginRise 700ms both;
+}
+
+.loginShowcase li:nth-child(2) { animation-delay: 100ms; }
+.loginShowcase li:nth-child(3) { animation-delay: 200ms; }
+
+.loginShowcase li span {
+  border-color: rgb(166 207 255 / 68%);
+  background: rgb(87 151 232 / 12%);
+}
+
+.loginFormPane {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(28px, 6vw, 84px);
+  background:
+    radial-gradient(ellipse at 88% 13%, rgb(63 133 232 / 8%), transparent 23rem),
+    linear-gradient(145deg, #f8faff, #fff 58%, #f5f8fe);
+}
+
+.loginFormPane::before {
+  position: absolute;
+  z-index: -1;
+  right: -145px;
+  bottom: -180px;
+  width: 380px;
+  aspect-ratio: 1;
+  border: 1px solid rgb(28 105 190 / 8%);
+  border-radius: 50%;
+  box-shadow: 0 0 0 35px rgb(28 105 190 / 2%), 0 0 0 75px rgb(28 105 190 / 2%);
+  content: "";
+}
+
+.loginFormInner {
+  position: relative;
+  width: min(490px, 100%);
+  animation: loginRise 700ms 80ms both;
+}
+
+.loginCard {
+  padding: clamp(26px, 3.5vw, 44px);
+  border: 1px solid rgb(222 231 243 / 88%);
+  border-radius: 26px;
+  background: rgb(255 255 255 / 91%);
+  box-shadow: 0 30px 90px rgb(18 47 87 / 10%), 0 4px 14px rgb(18 47 87 / 4%);
+  backdrop-filter: blur(18px);
+}
+
+.loginHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 34px;
+}
+
+.authFormInner .authTabs {
+  display: flex;
+  width: fit-content;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid #e6edf6;
+  border-radius: 12px;
+  background: #f3f6fb;
+}
+
+.authFormInner .authTab,
+.authFormInner .authTabActive {
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-radius: 9px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.authFormInner .authTab:hover {
+  color: #123b72;
+}
+
+.authFormInner .authTabActive {
+  background: #fff;
+  color: #125ec5;
+  box-shadow: 0 2px 6px rgb(18 47 87 / 9%);
+}
+
+.loginSecure {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #718198;
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.loginSecure svg { color: #16835d; }
+
+.loginEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 12px;
+  color: #1769aa;
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.loginEyebrow svg { color: #dfaa43; }
+
+.loginCard > h1 {
+  margin: 0;
+  color: #102b50;
+  font-size: clamp(30px, 3.3vw, 40px);
+  letter-spacing: -1.7px;
+  line-height: 1.13;
+}
+
+.loginIntro {
+  max-width: 390px;
+  margin: 12px 0 28px;
+  color: #6d7d93;
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.authFormInner > .loginCard > .loginForm {
+  gap: 18px;
+  margin-top: 0;
+}
+
+.loginField {
+  gap: 8px;
+  color: #253b5a;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.loginInputWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.loginInputWrap > svg {
+  position: absolute;
+  z-index: 1;
+  left: 15px;
+  color: #8a9ab0;
+  pointer-events: none;
+  transition: color 180ms ease;
+}
+
+.loginInputWrap:focus-within > svg {
+  color: #1769d2;
+}
+
+.loginField .loginInputWrap input {
+  min-height: 54px;
+  padding: 0 48px;
+  border: 1px solid #dfe7f1;
+  border-radius: 13px;
+  background: #f8faff;
+  color: #182b45;
+  font-size: 14px;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.loginField .loginInputWrap input::placeholder {
+  color: #9aa8bb;
+}
+
+.loginField .loginInputWrap input:focus {
+  border-color: #6ba2ed;
+  background: #fff;
+  box-shadow: 0 0 0 4px rgb(23 105 210 / 10%);
+  outline: 0;
+}
+
+.loginField .loginInputWrap input[aria-invalid="true"] {
+  border-color: #dc7676;
+}
+
+.loginInputWrap.passwordField input {
+  padding-right: 52px;
+}
+
+.loginCard .passwordToggle {
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  right: 7px;
+  border-radius: 9px;
+  color: #70819a;
+  transition: color 160ms ease, background 160ms ease;
+}
+
+.loginCard .passwordToggle:hover {
+  background: #edf4ff;
+  color: #1769d2;
+}
+
+.loginSubmit {
+  min-height: 54px;
+  gap: 10px;
+  margin-top: 6px;
+  border-radius: 13px;
+  background: linear-gradient(105deg, #0879ed, #0758c9);
+  box-shadow: 0 10px 24px rgb(0 102 255 / 22%);
+  font-size: 14px;
+  transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.loginSubmit:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(105deg, #0879ed, #0758c9);
+  box-shadow: 0 14px 28px rgb(0 102 255 / 28%);
+  filter: saturate(1.08);
+}
+
+.loginSubmit:active {
+  transform: translateY(0);
+}
+
+.loginSubmit svg {
+  transition: transform 180ms ease;
+}
+
+.loginSubmit:hover svg {
+  transform: translateX(3px);
+}
+
+.loginFooter {
+  display: grid;
+  justify-items: center;
+  gap: 19px;
+  margin-top: 24px;
+  color: #73839a;
+  font-size: 12px;
+}
+
+.loginFooter > a,
+.loginFooter span > a {
+  color: #1267cc;
+  font-weight: 700;
+  text-decoration: none;
+  transition: color 160ms ease;
+}
+
+.loginFooter > a:hover,
+.loginFooter span > a:hover {
+  color: #084a9b;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.loginFooter span {
+  text-align: center;
+}
+
+@keyframes loginRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes loginFloat {
+  from { transform: translate3d(-12px, -10px, 0) scale(0.96); }
+  to { transform: translate3d(22px, 18px, 0) scale(1.05); }
+}
+
+.workspacePage {
+  background: #f3f4f6;
+}
+
+.workspaceLayout {
+  width: min(1480px, calc(100% - 48px));
+  grid-template-columns: 224px minmax(0, 1fr);
+  gap: 20px;
+  margin-top: 22px;
+}
+
+.workspaceSidebar {
+  align-self: start;
+  min-height: min(780px, calc(100vh - 110px));
+  padding: 16px 12px;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #123b72, #08264d);
+  color: #fff;
+}
+
+.sidebarProfile { display: flex; align-items: center; gap: 10px; padding: 5px 7px 18px; border-bottom: 1px solid rgb(255 255 255 / 14%); }
+.sidebarProfile > span:last-child { display: grid; gap: 4px; min-width: 0; }
+.sidebarProfile strong { overflow: hidden; color: #fff; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.sidebarProfile small { color: #b6cbe4; font-size: 10px; }
+.sidebarAvatar { display: grid; width: 35px; height: 35px; flex: 0 0 35px; place-items: center; border: 1px solid rgb(255 255 255 / 25%); border-radius: 50%; background: #2563eb; color: #fff; font-weight: 800; }
+.workspaceSidebar .sidebarCaption { margin: 16px 8px 8px; color: #adc4df; font-size: 9px; letter-spacing: 0.11em; text-transform: uppercase; }
+.workspaceNav { gap: 4px; }
+.workspaceLink { min-height: 40px; padding: 0 9px; border-radius: 8px; color: #d6e4f5; font-size: 11px; }
+.workspaceLink:hover { background: rgb(255 255 255 / 9%); color: #fff; transform: none; }
+.workspaceLink[aria-current="page"] { background: #2563eb; color: #fff; }
+.navLetter,
+.workspaceLink[aria-current="page"] .navLetter { width: 25px; height: 25px; flex-basis: 25px; border: 0; background: transparent; color: inherit; font-size: 14px; }
+.sidebarCreate { border-color: rgb(255 255 255 / 25%); background: rgb(255 255 255 / 8%); color: #fff; font-size: 11px; }
+.sidebarNote { border-color: rgb(255 255 255 / 12%); background: rgb(255 255 255 / 7%); }
+.sidebarNote strong, .sidebarNote a { color: #fff; }
+.sidebarNoteMark { background: #2563eb; color: #fff; }
+.workspaceMain { min-width: 0; }
+.workspaceAside { display: none; }
+.workspacePage .workspaceMain > .card { min-height: 700px; padding: clamp(24px, 3vw, 36px); border-radius: 14px; background: #fff; box-shadow: 0 8px 25px rgb(15 35 67 / 5%); }
+
+@media (max-width: 820px) {
+  .authLayout { grid-template-columns: minmax(290px, 0.8fr) minmax(360px, 1.2fr); }
+  .authFormPane { padding: 26px; }
+  .loginPage .authLayout { grid-template-columns: minmax(0, 0.82fr) minmax(360px, 1.18fr); }
+  .loginFormPane { padding: 24px; }
+  .workspaceLayout { grid-template-columns: 190px minmax(0, 1fr); }
+}
+
+@media (max-width: 680px) {
+  .authLayout { display: block; }
+  .authShowcase { display: none; }
+  .authFormPane { min-height: 100svh; padding: 26px 20px; }
+  .authMobileBrand { display: block; }
+  .authMobileBrand .brand { color: #123b72; }
+  .authMobileBrand .brandMark { background: #123b72; color: #fff; }
+  .loginPage .authLayout { min-height: 100svh; background: transparent; }
+  .loginFormPane { min-height: 100svh; padding: 22px 16px; }
+  .loginFormInner { width: min(490px, 100%); }
+  .loginCard { padding: clamp(22px, 7vw, 34px); border-radius: 22px; }
+  .loginHeader { margin-bottom: 28px; }
+  .loginSecure { font-size: 10px; }
+  .loginCard > h1 { font-size: clamp(30px, 8vw, 38px); }
+  .workspaceLayout { display: block; width: calc(100% - 24px); }
+  .workspaceSidebar { display: none; }
+}
+
+@media (max-width: 380px) {
+  .loginSecure { gap: 4px; font-size: 9px; }
+  .authFormInner .authTab,
+  .authFormInner .authTabActive { padding: 0 10px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .loginShowcase > .brand,
+  .loginShowcaseCopy,
+  .loginShowcase li,
+  .loginFormInner {
+    animation: none;
+  }
+
+  .loginOrbs span {
+    animation: none;
+  }
+
   .workspacePage .workspaceMain > .card {
     animation: none;
   }
@@ -2393,4 +3028,1100 @@
 .feedLoadMore button:disabled {
   cursor: wait;
   opacity: 0.7;
+}
+
+/* Responsive Conect Services workspace */
+.workspacePage {
+  min-height: 100vh;
+  padding: 0 0 36px;
+  background: #f8fafc;
+}
+
+.workspaceHeader {
+  border-bottom-color: #e8edf4;
+  background: rgb(248 250 252 / 94%);
+}
+
+.workspaceHeaderInner {
+  width: min(1600px, calc(100% - 48px));
+  min-height: 76px;
+  justify-content: space-between;
+}
+
+.workspaceGreeting {
+  display: grid;
+  gap: 4px;
+  color: #64748b;
+}
+
+.workspaceGreeting span {
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.workspaceGreeting strong {
+  color: #0f172a;
+  font-size: 15px;
+}
+
+.workspaceLayout {
+  width: min(1600px, calc(100% - 48px));
+  grid-template-columns: 246px minmax(0, 1fr) 250px;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.workspaceSidebar {
+  position: sticky;
+  top: 96px;
+  display: flex;
+  max-height: calc(100dvh - 112px);
+  min-height: calc(100vh - 120px);
+  flex-direction: column;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 20px 16px 16px;
+  border-radius: 20px;
+  background: #0a192f;
+  box-shadow: 0 18px 40px rgb(10 25 47 / 14%);
+  scrollbar-color: rgb(255 255 255 / 24%) transparent;
+  scrollbar-width: thin;
+}
+
+.workspaceSidebar .brand {
+  gap: 10px;
+  margin: 0 4px 22px;
+  color: #fff;
+}
+
+.workspaceSidebar .brandMark {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: #0066ff;
+  box-shadow: none;
+  color: #fff;
+}
+
+.workspaceSidebar .brandWord {
+  color: #fff;
+  font-size: 18px;
+}
+
+.workspaceSidebar .brandWord > span {
+  color: #69a3ff;
+}
+
+.workspaceSidebar .brandWord small {
+  color: #a7b5ca;
+}
+
+.sidebarProfile {
+  min-height: 64px;
+  padding: 12px 8px;
+  border: 1px solid rgb(255 255 255 / 9%);
+  border-radius: 13px;
+  background: rgb(255 255 255 / 5%);
+}
+
+.sidebarProfile strong {
+  overflow: hidden;
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebarProfile small {
+  color: #9fb0c8;
+  font-size: 10px;
+}
+
+.sidebarProfileDetails {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.sidebarAvatar {
+  width: 38px;
+  height: 38px;
+  flex-basis: 38px;
+  border: 0;
+  object-fit: cover;
+  object-position: center;
+  background: #173a69;
+  color: #dceaff;
+  font-size: 12px;
+}
+
+.sidebarProfileError {
+  margin: 8px 8px 0;
+  color: #fecaca;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.workspaceSidebar .sidebarCaption {
+  margin: 24px 8px 10px;
+  color: #91a2bc;
+  font-size: 10px;
+  letter-spacing: 0.09em;
+}
+
+.workspaceNav {
+  gap: 5px;
+}
+
+.workspaceLink {
+  min-height: 43px;
+  gap: 10px;
+  padding: 0 10px;
+  border-radius: 10px;
+  color: #c3cee0;
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.workspaceLink:hover {
+  background: rgb(255 255 255 / 7%);
+  color: #fff;
+}
+
+.workspaceLink[aria-current="page"] {
+  background: #0066ff;
+  color: #fff;
+  box-shadow: 0 6px 16px rgb(0 102 255 / 24%);
+}
+
+.workspaceLink:focus-visible,
+.sidebarCreate:focus-visible,
+.sidebarBottom button:focus-visible,
+.asideLink:focus-visible,
+.promoCard a:focus-visible {
+  outline: 2px solid #8db9ff;
+  outline-offset: 3px;
+}
+
+.navLetter,
+.workspaceLink[aria-current="page"] .navLetter {
+  width: 24px;
+  height: 24px;
+  flex-basis: 24px;
+  border: 0;
+  background: transparent;
+  color: inherit;
+}
+
+.sidebarCreate {
+  min-height: 43px;
+  margin-top: 14px;
+  border-color: rgb(255 255 255 / 15%);
+  background: rgb(255 255 255 / 7%);
+  color: #fff;
+}
+
+.sidebarNote {
+  gap: 9px;
+  margin-top: 20px;
+  padding: 14px;
+  border-color: rgb(255 255 255 / 9%);
+  background: linear-gradient(145deg, rgb(29 62 103 / 74%), rgb(15 39 72 / 85%));
+}
+
+.sidebarNote strong {
+  color: #e4ecf8;
+  font-size: 11px;
+}
+
+.sidebarNote a {
+  color: #83b4ff;
+}
+
+.sidebarNoteMark {
+  background: rgb(0 102 255 / 20%);
+  color: #8db9ff;
+}
+
+.sidebarBottom {
+  display: grid;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 18px;
+}
+
+.sidebarBottom button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  gap: 10px;
+  padding: 0 10px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  background: transparent;
+  color: #c3cee0;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.sidebarBottom button:hover:not(:disabled) {
+  background: rgb(255 255 255 / 8%);
+  color: #fff;
+}
+
+.sidebarBottom button:disabled {
+  cursor: wait;
+  opacity: 0.65;
+}
+
+.sidebarError {
+  margin: 0;
+  color: #fecaca;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.workspaceMain {
+  min-width: 0;
+  padding: 5px 0 30px;
+}
+
+.workspacePage .workspaceMain > .card {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.workspacePage .workspaceMain > .accountCard h1 {
+  margin-top: 2px;
+  color: #0f172a;
+  font-size: clamp(26px, 2.4vw, 34px);
+  letter-spacing: -1.15px;
+}
+
+.workspacePage .workspaceMain > .accountCard h2 {
+  color: #0f172a;
+}
+
+.workspacePage .eyebrow,
+.workspacePage .submitLink,
+.workspacePage .orderCategory {
+  color: #0066ff;
+}
+
+.workspacePage .intro {
+  color: #64748b;
+}
+
+.workspacePage .dashboardStats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin: 24px 0 30px;
+}
+
+.workspacePage .dashboardStats > div {
+  min-height: 116px;
+  align-content: space-between;
+  padding: 17px;
+  border-color: #e8edf4;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(15 23 42 / 3%);
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.workspacePage .dashboardStats > div:hover {
+  transform: translateY(-2px);
+  border-color: #c9dcf9;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+}
+
+.workspacePage .dashboardStats strong {
+  color: #0f172a;
+  font-size: 27px;
+}
+
+.workspacePage .dashboardStats span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.workspacePage .dashboardSection,
+.workspacePage .feedSection,
+.workspacePage .companyPanel,
+.workspacePage .profileSection {
+  margin: 22px 0;
+  padding: 20px;
+  border: 1px solid #e8edf4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(15 23 42 / 3%);
+}
+
+.workspacePage .dashboardSection h2,
+.workspacePage .feedHeading h2 {
+  color: #0f172a;
+}
+
+.workspacePage .dashboardLinks a {
+  border-color: #e8edf4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.workspacePage .dashboardLinks a:hover {
+  border-color: #b7d1f6;
+}
+
+.workspacePage .dashboardLinks strong,
+.workspacePage .accountInfo strong,
+.workspacePage .managedService h3,
+.workspacePage .orderCard h2,
+.workspacePage .orderEmpty h2,
+.workspacePage .bookingCard h2,
+.workspacePage .profileHeading h2,
+.workspacePage .verificationPanel h3,
+.workspacePage .proposalSection h3 {
+  color: #17243b;
+}
+
+.workspacePage .dashboardLinks span,
+.workspacePage .profileHint,
+.workspacePage .field span {
+  color: #64748b;
+}
+
+.workspacePage .providerWelcome,
+.workspacePage .companyWelcome {
+  border-color: #dce8f8;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #eff6ff, #fff 76%);
+}
+
+.workspacePage .activityCard {
+  border-color: #e8edf4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.workspacePage .activityCard:hover {
+  border-color: #c9dcf9;
+  background: #f8fbff;
+}
+
+.workspacePage .activityState {
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d5bbf;
+}
+
+.workspaceAside {
+  position: sticky;
+  top: 100px;
+  display: grid;
+  max-height: calc(100dvh - 112px);
+  gap: 14px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+}
+
+.asideCard,
+.promoCard {
+  padding: 16px;
+  border-color: #e8edf4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(15 23 42 / 3%);
+}
+
+.asideCard .sidebarCaption {
+  color: #64748b;
+}
+
+.asideHeading {
+  display: grid;
+  gap: 5px;
+  padding: 2px 6px 7px;
+}
+
+.asideHeading .sidebarCaption {
+  margin: 0;
+  color: #2563eb;
+}
+
+.asideHeading > span {
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.asideGroupTitle {
+  margin: 8px 6px 0;
+  padding-top: 12px;
+  border-top: 1px solid #e8edf4;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.asideCard > .asideLink {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.asideCard > .asideLink:hover {
+  transform: translateX(2px);
+  border-color: #e3ecfb;
+  background: #f4f8ff;
+}
+
+.asideLinkIcon {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid #e5ecf7;
+  border-radius: 10px;
+  background: #f7faff;
+  color: #2563eb;
+}
+
+.asideLinkCopy {
+  display: grid;
+  min-width: 0;
+  flex: 1;
+  gap: 4px;
+}
+
+.asideCard .asideLinkCopy strong {
+  color: #17243b;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.asideCard .asideLinkCopy > span {
+  color: #64748b;
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.asideLinkArrow {
+  flex: 0 0 auto;
+  color: #94a3b8;
+  transition: color 150ms ease, transform 150ms ease;
+}
+
+.asideLink:hover .asideLinkArrow {
+  transform: translate(1px, -1px);
+  color: #2563eb;
+}
+
+.asideCard > a strong {
+  color: #17243b;
+  font-size: 12px;
+}
+
+.asideCard > a span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.promoCard {
+  display: grid;
+  gap: 9px;
+  padding: 18px;
+  background: linear-gradient(145deg, #0a192f, #173b70);
+  color: #fff;
+}
+
+.promoCard > span {
+  color: #9fc2ff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.promoCard > strong {
+  font-size: 16px;
+  line-height: 1.3;
+}
+
+.promoCard p {
+  margin: 0;
+  color: #c6d4e8;
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.promoCard a {
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.workspaceFootnote {
+  color: #8390a3;
+}
+
+.mobileNav {
+  display: none;
+}
+
+@media (max-width: 1240px) {
+  .workspaceLayout {
+    grid-template-columns: 236px minmax(0, 1fr);
+  }
+
+  .workspaceAside {
+    display: none;
+  }
+}
+
+@media (max-width: 900px) {
+  .workspaceHeaderActions > a:not(.createAction) {
+    display: none;
+  }
+
+  .workspacePage .dashboardStats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .workspacePage {
+    padding-bottom: 82px;
+  }
+
+  .workspaceHeaderInner {
+    width: calc(100% - 28px);
+    min-height: 64px;
+  }
+
+  .workspaceGreeting span {
+    font-size: 9px;
+  }
+
+  .workspaceGreeting strong {
+    font-size: 13px;
+  }
+
+  .workspaceHeaderActions {
+    gap: 6px;
+  }
+
+  .workspaceHeaderActions > .createAction {
+    min-height: 36px;
+    margin: 0;
+    padding: 0 10px;
+    font-size: 0;
+  }
+
+  .workspaceHeaderActions > .createAction svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .workspaceLayout {
+    display: block;
+    width: calc(100% - 28px);
+    margin-top: 18px;
+  }
+
+  .workspaceSidebar {
+    display: none;
+  }
+
+  .workspaceMain {
+    padding-top: 0;
+  }
+
+  .workspacePage .workspaceMain > .accountCard h1 {
+    font-size: 27px;
+  }
+
+  .workspacePage .dashboardSection,
+  .workspacePage .feedSection,
+  .workspacePage .companyPanel,
+  .workspacePage .profileSection {
+    padding: 16px;
+  }
+
+  .workspacePage .dashboardStats {
+    gap: 10px;
+    margin: 20px 0 24px;
+  }
+
+  .workspacePage .dashboardStats > div {
+    min-height: 102px;
+    padding: 14px;
+  }
+
+  .workspacePage .dashboardStats strong {
+    font-size: 24px;
+  }
+
+  .workspacePage .dashboardLinks {
+    grid-template-columns: 1fr;
+  }
+
+  .mobileNav {
+    position: fixed;
+    z-index: 40;
+    right: 12px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: 12px;
+    display: flex;
+    justify-content: space-around;
+    gap: 2px;
+    padding: 7px 5px;
+    border: 1px solid #e8edf4;
+    border-radius: 18px;
+    background: rgb(255 255 255 / 96%);
+    box-shadow: 0 12px 32px rgb(10 25 47 / 14%);
+    backdrop-filter: blur(16px);
+  }
+
+  .mobileNav .workspaceLink {
+    display: grid;
+    min-width: 0;
+    min-height: 52px;
+    flex: 1;
+    justify-items: center;
+    gap: 2px;
+    padding: 4px 1px;
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 9px;
+  }
+
+  .mobileNav .workspaceLink[aria-current="page"] {
+    background: #eff6ff;
+    color: #0066ff;
+    box-shadow: none;
+  }
+
+  .mobileNav .navLetter {
+    width: 23px;
+    height: 23px;
+    flex-basis: auto;
+  }
+}
+
+.workspacePage .dashboardStats .metricCard {
+  grid-template-columns: 38px minmax(0, 1fr);
+  grid-template-rows: 1fr auto;
+  column-gap: 12px;
+}
+
+.workspacePage .dashboardStats .metricIcon {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  grid-row: 1 / span 2;
+  place-items: center;
+  border-radius: 12px;
+  font-size: 15px;
+}
+
+.metricIcon[data-tone="rose"] {
+  background: #fff1f2;
+  color: #e11d48;
+}
+
+.metricIcon[data-tone="blue"] {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.metricIcon[data-tone="violet"] {
+  background: #f5f3ff;
+  color: #7c3aed;
+}
+
+.metricIcon[data-tone="amber"] {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.featuredProviders {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.featuredProvider {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e8edf4;
+  border-radius: 14px;
+  background: #fff;
+  transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.featuredProvider:hover {
+  transform: translateY(-2px);
+  border-color: #c9dcf9;
+  box-shadow: 0 10px 24px rgb(15 23 42 / 6%);
+}
+
+.featuredImage {
+  width: 56px;
+  height: 56px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.featuredProvider > div {
+  display: grid;
+  align-content: start;
+  gap: 6px;
+  min-width: 0;
+}
+
+.featuredProvider > div > strong {
+  overflow: hidden;
+  color: #17243b;
+  font-size: 13px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.featuredProvider > div > small {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #64748b;
+  font-size: 11px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.featuredMeta {
+  color: #475569;
+  font-size: 10px;
+}
+
+.featuredCategory {
+  width: fit-content;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #eff6ff;
+  color: #1d5bbf;
+  font-size: 9px;
+  font-weight: 700;
+}
+
+.featuredProvider > a {
+  display: inline-flex;
+  min-height: 36px;
+  grid-column: 1 / -1;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: #0066ff;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 160ms ease, transform 160ms ease;
+}
+
+.featuredProvider > a:hover {
+  transform: translateY(-1px);
+  background: #0054d1;
+}
+
+@media (max-width: 1100px) {
+  .featuredProviders {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 680px) {
+  .featuredProviders {
+    grid-template-columns: 1fr;
+  }
+}
+
+.workspacePage .providerWelcome,
+.workspacePage .companyWelcome {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 14px;
+  margin: 20px 0;
+  padding: 18px;
+  border: 1px solid #dce8f8;
+  border-radius: 16px;
+  background: linear-gradient(110deg, #eff6ff, #fff 76%);
+}
+
+.providerWelcomeAvatar,
+.companyWelcomeLogo {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+}
+
+.providerWelcomeAvatar {
+  display: grid;
+  place-items: center;
+  background: #dbeafe;
+  color: #1d4ed8;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.companyWelcomeLogo {
+  object-fit: cover;
+}
+
+.providerWelcome > div,
+.companyWelcome > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.providerWelcome > div > span,
+.companyWelcome > div > span {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.providerWelcome > div > strong,
+.companyWelcome > div > strong {
+  overflow: hidden;
+  color: #17243b;
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.providerWelcome > div > small,
+.companyWelcome > div > small {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.providerWelcomeStatus,
+.profileBadge {
+  width: fit-content;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: #ecfdf3;
+  color: #027a48;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.providerWelcomeStatus[data-status="PENDING"] {
+  background: #fffaeb;
+  color: #b54708;
+}
+
+.providerWelcomeStatus[data-status="REJECTED"],
+.providerWelcomeStatus[data-status="SUSPENDED"] {
+  background: #fef3f2;
+  color: #b42318;
+}
+
+.providerWelcome > a,
+.companyWelcome > a {
+  color: #0066ff;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.providerStatus {
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  border-color: #e8edf4;
+  border-radius: 13px;
+  background: #fff;
+}
+
+.providerStatus > span {
+  color: #64748b;
+  font-size: 11px;
+}
+
+.providerStatus > strong {
+  color: #17243b;
+}
+
+.providerStatus > p {
+  grid-column: 1 / -1;
+}
+
+.companyPanels {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(230px, 0.7fr);
+  gap: 14px;
+  margin: 22px 0;
+}
+
+.workspacePage .companyPanel {
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  min-width: 0;
+  margin: 0;
+  padding: 19px;
+  border: 1px solid #e8edf4;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 5px 18px rgb(15 23 42 / 3%);
+}
+
+.companyPanel .feedHeading {
+  margin-bottom: 0;
+}
+
+.companyPanel .feedHeading h2 {
+  font-size: 16px;
+}
+
+.companyChart {
+  display: grid;
+  gap: 13px;
+}
+
+.companyBarRow {
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 10px;
+}
+
+.companyBarRow small {
+  color: #64748b;
+  font-size: 10px;
+}
+
+.companyBarRow > span {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #eff3f8;
+}
+
+.companyBarRow > span > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #0066ff, #71aaff);
+}
+
+.companyBarRow strong {
+  color: #17243b;
+  font-size: 11px;
+  text-align: right;
+}
+
+.companyPanel > small {
+  color: #8390a3;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.companyQuickLinks {
+  display: grid;
+  gap: 7px;
+}
+
+.companyQuickLinks a {
+  display: grid;
+  gap: 4px;
+  padding: 11px;
+  border: 1px solid #edf1f6;
+  border-radius: 10px;
+  color: #17243b;
+  font-size: 11px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+.companyQuickLinks a:hover {
+  border-color: #c9dcf9;
+  background: #f8fbff;
+}
+
+.companyQuickLinks a span {
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 400;
+}
+
+@media (max-width: 900px) {
+  .workspacePage .providerWelcome,
+  .workspacePage .companyWelcome {
+    grid-template-columns: 48px minmax(0, 1fr) auto;
+  }
+
+  .providerWelcomeStatus,
+  .companyWelcome .profileBadge {
+    grid-column: 2;
+  }
+
+  .providerWelcome > a,
+  .companyWelcome > a {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+  }
+
+  .companyPanels {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .workspacePage .providerWelcome,
+  .workspacePage .companyWelcome {
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+    padding: 14px;
+  }
+
+  .providerWelcomeAvatar,
+  .companyWelcomeLogo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .providerWelcomeStatus,
+  .companyWelcome .profileBadge,
+  .providerWelcome > a,
+  .companyWelcome > a {
+    grid-column: 2;
+    grid-row: auto;
+  }
+
+  .companyBarRow {
+    grid-template-columns: 68px minmax(0, 1fr) 24px;
+    gap: 7px;
+  }
 }

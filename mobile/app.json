@@ -29,7 +29,7 @@
     "plugins": [
       "expo-router",
       "expo-secure-store",
-      ["expo-notifications", { "defaultChannel": "messages", "color": "#0a7563" }],
+      ["expo-notifications", { "defaultChannel": "messages", "color": "#2563EB" }],
       [
         "expo-splash-screen",
         {

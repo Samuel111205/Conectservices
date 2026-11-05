@@ -104,7 +104,7 @@ export default function OrdersScreen() {
           <RefreshControl
             refreshing={loading}
             onRefresh={() => void load()}
-            tintColor="#0a7563"
+            tintColor="#2563EB"
           />
         }
         ListHeaderComponent={
@@ -129,7 +129,7 @@ export default function OrdersScreen() {
         }
         ListEmptyComponent={
           loading ? (
-            <ActivityIndicator style={styles.loader} color="#0a7563" />
+            <ActivityIndicator style={styles.loader} color="#2563EB" />
           ) : error ? (
             <View style={styles.card}>
               <Text style={styles.error}>{error}</Text>
@@ -179,20 +179,20 @@ export default function OrdersScreen() {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: "#fffdf8" },
+  safe: { flex: 1, backgroundColor: "#FFFFFF" },
   content: { padding: 18, paddingBottom: 30 },
   header: { paddingVertical: 18 },
   eyebrow: {
-    color: "#0a7563",
+    color: "#2563EB",
     fontSize: 12,
     fontWeight: "800",
     letterSpacing: 1.4,
   },
-  title: { color: "#183d35", fontSize: 29, fontWeight: "800", marginTop: 8 },
+  title: { color: "#123B72", fontSize: 29, fontWeight: "800", marginTop: 8 },
   subtitle: { color: "#61716b", fontSize: 14, lineHeight: 21, marginTop: 6 },
   primary: {
     alignSelf: "flex-start",
-    backgroundColor: "#0a7563",
+    backgroundColor: "#2563EB",
     borderRadius: 12,
     marginTop: 18,
     paddingHorizontal: 18,
@@ -208,11 +208,11 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   row: { alignItems: "flex-start", flexDirection: "row", gap: 8 },
-  cardTitle: { color: "#183d35", flex: 1, fontSize: 16, fontWeight: "800" },
+  cardTitle: { color: "#123B72", flex: 1, fontSize: 16, fontWeight: "800" },
   badge: {
     backgroundColor: "#e5f3ed",
     borderRadius: 8,
-    color: "#176653",
+    color: "#123B72",
     fontSize: 11,
     fontWeight: "700",
     overflow: "hidden",
@@ -220,9 +220,9 @@ const styles = StyleSheet.create({
     paddingVertical: 5,
   },
   location: { color: "#61716b", fontSize: 12, marginTop: 8 },
-  description: { color: "#28493f", fontSize: 14, lineHeight: 20, marginTop: 10 },
+  description: { color: "#374151", fontSize: 14, lineHeight: 20, marginTop: 10 },
   cancel: { color: "#a12f37", fontSize: 13, fontWeight: "700", marginTop: 14 },
   loader: { margin: 30 },
   error: { color: "#a12f37", marginBottom: 10 },
-  link: { color: "#08755f", fontWeight: "700", marginTop: 14 },
+  link: { color: "#2563EB", fontWeight: "700", marginTop: 14 },
 });
