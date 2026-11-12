@@ -11,7 +11,8 @@ Mobile através da mesma API.
 - SQLite para desenvolvimento local e PostgreSQL para produção.
 - Redis armazena o cache partilhado e serve de broker Celery para notificações
   e emails processados em segundo plano.
-- Next.js e React Native são clientes da API, sem lógica de negócio duplicada.
+- React com Vite (Web) e React Native (Mobile) são clientes da API, sem lógica
+  de negócio duplicada.
 
 ## Requisitos
 
@@ -66,9 +67,9 @@ por isso, a migração inicial já pode ser aplicada.
 
 ## Aplicação Web
 
-A primeira versão Web usa Next.js e TypeScript e consome a API Django. Com o
-backend em execução em `http://localhost:8000`, inicia o frontend noutro
-terminal:
+A aplicação Web usa React, JavaScript/JSX e CSS, compilados pelo Vite, e consome
+a API Django. Com o backend em execução em `http://localhost:8000`, inicia o
+frontend noutro terminal:
 
 ```powershell
 Set-Location .\web
@@ -77,29 +78,58 @@ npm install
 npm run dev
 ```
 
-A aplicação fica disponível em `http://localhost:3000`. Configura
-`NEXT_PUBLIC_API_BASE_URL` em `web/.env.local` se a API estiver noutro endereço.
+A aplicação fica disponível em `http://localhost:5173`. O proxy do Vite envia
+os pedidos de `/api/v1/`, `/admin/`, `/media/` e `/static/` para
+`http://127.0.0.1:8000`; define
+`VITE_API_PROXY_TARGET` em `web/.env.local` se a API estiver noutro endereço.
+Para produção, executa `npm run build` e serve `web/dist` com fallback de rotas
+para `index.html`. O painel React de administração está em `/admin` (sem barra
+final); encaminha `/admin/` para o Django Admin e `/static/` para os ficheiros
+recolhidos pelo `collectstatic`. Encaminha também `/api/v1/` e `/media/` para os
+serviços correspondentes no mesmo domínio da aplicação, preservando a sessão
+HttpOnly e a protecção CSRF. Não uses o servidor de desenvolvimento do Vite em
+produção. Para abrir o painel React, usa `http://localhost:5173/admin`; o
+endereço `/admin/` no servidor Django continua a abrir o Django Admin. O botão
+“Abrir dashboard administrativo” no Django Admin encaminha para a aplicação Web,
+preservando o hostname local da sessão. O painel usa dados reais do endpoint administrativo existente; as
+gráficas de crescimento de empresas e as verificações de empresas são incluídas
+na API. Os serviços inactivos são apresentados como rascunhos/inactivos, não como
+aprovações pendentes, porque o modelo actual não distingue esses estados.
+Denúncias e relatórios permanecem indisponíveis até existir suporte no backend.
+A navegação detalhada para gestão de registos utiliza o Django Admin.
+Na visão geral, a análise compara registos, publicações, pedidos, encomendas,
+conversas e visualizações no período seleccionado com o período anterior de
+igual duração. Apresenta variação absoluta e percentual quando existe uma base
+de comparação, média diária e destaques calculados das métricas e categorias
+actuais. Estas comparações são descritivas, não previsões nem relações causais.
+A API também usa Pandas para calcular médias móveis de 7 dias e estatísticas
+diárias (média, desvio padrão amostral, dias activos e declive de regressão
+linear com R²) para cada indicador. O dashboard permite seleccionar um
+indicador nas estatísticas para o destacar no gráfico. O R² fica indisponível
+quando a série não varia, e a média móvel só é apresentada após completar os
+sete dias da janela; estes resultados descrevem os dados observados e não são
+previsões.
+O dashboard também apresenta um funil de pedidos de serviço (pedidos criados,
+com proposta, contratados e concluídos), com conversões entre etapas. A coorte
+é definida pela data de criação do pedido no período seleccionado; as etapas
+posteriores reflectem o estado actual desses pedidos, pelo que a conversão pode
+alterar-se enquanto os pedidos ainda estão em curso.
 O MVP Web permite pesquisar prestadores verificados, filtrar por categoria e
 município, ordenar resultados e consultar os serviços publicados. O registo e
-login usam os endpoints `/api/v1/auth/` do backend. A sessão Web guarda os
-tokens JWT em cookies HttpOnly através de rotas servidoras do Next.js; não
-exponha esses tokens ao JavaScript do navegador. A API permite criar a conta
-básica e, depois de entrar, consultar a área pessoal. A criação de perfil de
+login usam os endpoints `/api/v1/auth/` do backend. A Web usa uma sessão Django
+em cookie HttpOnly e protecção CSRF; os tokens JWT continuam disponíveis para
+clientes Mobile e não são expostos ao JavaScript do navegador. A API permite
+criar a conta básica e, depois de entrar, consultar a área pessoal. A criação de perfil de
 cliente ou prestador está disponível em `/perfil`: o perfil pessoal e o perfil
 profissional podem ser criados separadamente e atualizados depois.
 Clientes autenticados podem criar pedidos de serviço em `/pedidos/novo` e
-acompanhar os estados dos próprios pedidos em `/pedidos`. Os tokens continuam
-guardados em cookies HttpOnly e as operações autenticadas passam pelo servidor
-Next.js. Prestadores verificados podem consultar oportunidades em
+acompanhar os estados dos próprios pedidos em `/pedidos`. As operações
+autenticadas usam a sessão segura do backend. Prestadores verificados podem consultar oportunidades em
 `/prestador/pedidos` e enviar propostas; os clientes podem comparar, aceitar
 ou rejeitar propostas na lista dos seus pedidos. A aceitação cria a contratação
 na API e exige que o pedido tenha duração definida. A página `/contratacoes`
 permite consultar horários disponíveis em Africa/Luanda, marcar e confirmar o
 horário, acompanhar a execução e confirmar a conclusão.
-
-Opcionalmente, define `API_BASE_URL` em `web/.env.local` para especificar o
-endereço da API apenas no servidor. Caso contrário, as rotas servidoras também
-usam `NEXT_PUBLIC_API_BASE_URL`.
 
 ## Aplicação Mobile
 

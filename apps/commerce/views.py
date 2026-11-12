@@ -1,7 +1,7 @@
 from django.db.models import Q
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
@@ -64,7 +64,16 @@ class ProductViewSet(viewsets.ModelViewSet):
                 | Q(category__name__icontains=search)
             )
         category_id = self.request.query_params.get("category")
-        if category_id is not None and category_id.isdecimal():
+        if category_id is not None:
+            if not category_id.isdecimal() or len(category_id) > 19:
+                raise ValidationError(
+                    {"category": "Indica um identificador de categoria válido."}
+                )
+            category_id = int(category_id)
+            if category_id < 1 or category_id > 9_223_372_036_854_775_807:
+                raise ValidationError(
+                    {"category": "Indica um identificador de categoria válido."}
+                )
             publicos = publicos.filter(category_id=category_id)
         return publicos.order_by("name", "pk")
 
@@ -109,7 +118,6 @@ class ProductOrderViewSet(
         ).select_related(
             "buyer",
             "provider",
-            "provider__user",
             "review",
         ).prefetch_related("items")
         return queryset

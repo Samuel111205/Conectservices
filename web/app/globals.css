@@ -1,6 +1,3 @@
-@import "tailwindcss/theme" layer(theme);
-@import "tailwindcss/utilities" layer(utilities);
-
 :root {
   color-scheme: light;
   --ink: #182b45;
@@ -11,6 +8,33 @@
   --cream: #f5f8fc;
   --line: #e1e9f2;
   --white: #fff;
+  --bs-primary: var(--brand-blue);
+  --bs-primary-rgb: 23, 105, 170;
+  --bs-secondary: #64748b;
+  --bs-secondary-rgb: 100, 116, 139;
+  --bs-success: #198754;
+  --bs-danger: #c03935;
+  --bs-warning: #d99719;
+  --bs-info: #1683b8;
+  --bs-body-color: var(--ink);
+  --bs-body-bg: #f7f9fc;
+  --bs-border-color: var(--line);
+  --bs-link-color: var(--brand-blue);
+  --bs-link-hover-color: var(--brand-blue-dark);
+  --bs-link-color-rgb: 23, 105, 170;
+  --bs-link-hover-color-rgb: 18, 59, 102;
+  --bs-border-radius: 0.75rem;
+  --bs-border-radius-sm: 0.5rem;
+  --bs-border-radius-lg: 1rem;
+  --bs-focus-ring-color: rgb(23 105 170 / 25%);
+  --bs-font-sans-serif:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+  --motion-smooth: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-spring: cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 * {
@@ -23,14 +47,9 @@ html {
 
 body {
   margin: 0;
-  background: #f8faff;
+  background: var(--bs-body-bg);
   color: var(--ink);
-  font-family:
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    sans-serif;
+  font-family: var(--bs-font-sans-serif);
   -webkit-font-smoothing: antialiased;
 }
 
@@ -40,10 +59,64 @@ select {
   font: inherit;
 }
 
+:where(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
+  border-color: var(--bs-border-color);
+  border-radius: var(--bs-border-radius-sm);
+  color: var(--bs-body-color);
+}
+
+.btn-primary {
+  --bs-btn-color: #fff;
+  --bs-btn-bg: var(--brand-blue);
+  --bs-btn-border-color: var(--brand-blue);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: #125a91;
+  --bs-btn-hover-border-color: #115487;
+  --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--brand-blue-dark);
+  --bs-btn-active-border-color: var(--brand-blue-dark);
+  --bs-btn-disabled-color: #fff;
+  --bs-btn-disabled-bg: var(--brand-blue);
+  --bs-btn-disabled-border-color: var(--brand-blue);
+}
+
+.btn-outline-primary {
+  --bs-btn-color: var(--brand-blue);
+  --bs-btn-border-color: var(--brand-blue);
+  --bs-btn-hover-color: #fff;
+  --bs-btn-hover-bg: var(--brand-blue);
+  --bs-btn-hover-border-color: var(--brand-blue);
+  --bs-btn-focus-shadow-rgb: var(--bs-primary-rgb);
+  --bs-btn-active-color: #fff;
+  --bs-btn-active-bg: var(--brand-blue-dark);
+  --bs-btn-active-border-color: var(--brand-blue-dark);
+  --bs-btn-disabled-color: var(--brand-blue);
+  --bs-btn-disabled-bg: transparent;
+  --bs-btn-disabled-border-color: var(--brand-blue);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: #7ab2dc;
+  box-shadow: 0 0 0 0.25rem var(--bs-focus-ring-color);
+}
+
 button,
 a,
 select {
   -webkit-tap-highlight-color: transparent;
+}
+
+button:not(:disabled),
+a[href],
+[role="button"] {
+  transition:
+    color 220ms var(--motion-smooth),
+    background-color 220ms var(--motion-smooth),
+    border-color 220ms var(--motion-smooth),
+    box-shadow 260ms var(--motion-smooth),
+    transform 260ms var(--motion-spring);
 }
 
 button:focus-visible,
@@ -57,6 +130,28 @@ select:focus-visible {
 ::selection {
   background: #d7eafe;
   color: #123b66;
+}
+
+* {
+  scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 999px;
+  background: #cbd5e1;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+  background-clip: padding-box;
 }
 
 html[data-scroll-reveal="enabled"] [data-scroll-reveal="pending"] {

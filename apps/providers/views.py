@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.db.models import (
     Case,
     Count,
@@ -89,8 +91,11 @@ def _anotar_avaliacoes(queryset):
             When(
                 review_count__gt=0,
                 then=ExpressionWrapper(
-                    Cast(F("reviews_total"), tipo_decimal)
-                    / Cast(F("review_count"), tipo_decimal),
+                    (
+                        Cast(F("reviews_total"), tipo_decimal)
+                        * Value(Decimal("1.00"))
+                        / Cast(F("review_count"), tipo_decimal)
+                    ),
                     output_field=DecimalField(max_digits=6, decimal_places=2),
                 ),
             ),

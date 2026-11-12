@@ -1,18 +1,68 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+const globals = [
+  "AbortController",
+  "AbortSignal",
+  "Blob",
+  "CustomEvent",
+  "Date",
+  "DOMParser",
+  "Element",
+  "Error",
+  "Event",
+  "File",
+  "FileReader",
+  "FormData",
+  "Headers",
+  "HTMLElement",
+  "HTMLInputElement",
+  "HTMLSelectElement",
+  "HTMLTextAreaElement",
+  "IntersectionObserver",
+  "Intl",
+  "KeyboardEvent",
+  "localStorage",
+  "location",
+  "matchMedia",
+  "Math",
+  "MutationObserver",
+  "navigator",
+  "Node",
+  "Number",
+  "Object",
+  "Promise",
+  "RegExp",
+  "Request",
+  "Response",
+  "Set",
+  "String",
+  "URL",
+  "URLSearchParams",
+  "window",
+  "clearTimeout",
+  "console",
+  "document",
+  "fetch",
+  "history",
+  "requestAnimationFrame",
+  "setTimeout",
+].reduce((result, name) => ({ ...result, [name]: "readonly" }), {});
 
-const eslintConfig = defineConfig([
-  ...nextVitals,
-  ...nextTs,
-  // Override default ignores of eslint-config-next.
-  globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
-  ]),
-]);
-
-export default eslintConfig;
+export default [
+  {
+    ignores: ["dist/**", ".next/**", ".vite/**", "node_modules/**", "out/**"],
+  },
+  {
+    files: ["**/*.{js,jsx}"],
+    languageOptions: {
+      ecmaVersion: "latest",
+      sourceType: "module",
+      globals: { ...globals, process: "readonly" },
+      parserOptions: {
+        ecmaFeatures: { jsx: true },
+      },
+    },
+    rules: {
+      "no-undef": "error",
+      "no-unreachable": "error",
+    },
+  },
+];

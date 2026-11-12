@@ -10,6 +10,9 @@ from .views import (
     ResendEmailVerificationView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
+    WebCsrfView,
+    WebLogoutView,
+    WebSessionView,
 )
 
 urlpatterns = [
@@ -20,6 +23,9 @@ urlpatterns = [
     path("password-reset/confirm/", PasswordResetConfirmView.as_view(), name="auth-password-reset-confirm"),
     path("token/", LoginView.as_view(), name="auth-token"),
     path("token/refresh/", RefreshView.as_view(), name="auth-token-refresh"),
+    path("web/csrf/", WebCsrfView.as_view(), name="auth-web-csrf"),
+    path("web/session/", WebSessionView.as_view(), name="auth-web-session"),
+    path("web/session/logout/", WebLogoutView.as_view(), name="auth-web-logout"),
     path("me/", CurrentAccountView.as_view(), name="auth-me"),
     path("logout/", LogoutView.as_view(), name="auth-logout"),
 ]

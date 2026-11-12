@@ -12,6 +12,7 @@ from rest_framework.test import APITestCase
 from rest_framework.throttling import ScopedRateThrottle
 
 from apps.bookings.models import Booking
+from apps.businesses.models import BusinessProfile
 from apps.catalog.models import Category, Service
 from apps.commerce.models import Product
 from apps.locations.models import Municipality, Province
@@ -22,6 +23,7 @@ from apps.providers.models import Provider
 from apps.reviews.models import Review
 
 from apps.dashboard.models import ListingView
+from apps.dashboard.services import _analisar_series_temporais
 
 User = get_user_model()
 
@@ -275,6 +277,203 @@ class DashboardApiTests(APITestCase):
         hoje = timezone.localdate().isoformat()
         linha_hoje = next(linha for linha in resposta.data["analytics"]["series"] if linha["date"] == hoje)
         self.assertEqual(linha_hoje["publications"], 2)
+
+    def test__painel_administrativo_disponibiliza_crescimento_e_aprovacoes_reais(self):
+        BusinessProfile.objects.create(
+            provider=self.provider,
+            registered_name="Assistência Luanda, Lda.",
+        )
+        pending_user = User.objects.create_user(
+            "pending-business@example.com",
+            "Strong-Password-567!",
+        )
+        pending_provider = Provider.objects.create(
+            user=pending_user,
+            commercial_name="Empresa por verificar",
+            verification_status=Provider.VerificationStatus.PENDING,
+            verification_submitted_at=timezone.now(),
+        )
+        BusinessProfile.objects.create(
+            provider=pending_provider,
+            registered_name="Empresa por verificar, Lda.",
+        )
+        self.client.force_authenticate(self.admin_user)
+
+        resposta = self.client.get(reverse("admin-dashboard"), {"period": 30})
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(resposta.data["summary"]["businesses_total"], 2)
+        self.assertEqual(
+            resposta.data["summary"]["business_verifications_pending"],
+            1,
+        )
+        self.assertEqual(resposta.data["summary"]["inactive_services"], 1)
+        self.assertEqual(len(resposta.data["business_growth"]), 12)
+        mes_atual = timezone.localdate().strftime("%Y-%m")
+        crescimento_atual = next(
+            item
+            for item in resposta.data["business_growth"]
+            if item["month"] == mes_atual
+        )
+        self.assertEqual(crescimento_atual["businesses"], 2)
+        self.assertEqual(
+            resposta.data["pending_businesses"][0]["registered_name"],
+            "Empresa por verificar, Lda.",
+        )
+        self.assertEqual(
+            resposta.data["inactive_services"][0]["name"],
+            "Consultoria",
+        )
+        self.assertFalse(resposta.data["reports_available"])
+
+    def test__painel_administrativo_compara_periodos_equivalentes(self):
+        agora = timezone.now()
+        utilizador_anterior = User.objects.create_user(
+            "previous-period@example.com",
+            "Strong-Password-890!",
+        )
+        utilizador_atual = User.objects.create_user(
+            "current-period@example.com",
+            "Strong-Password-901!",
+        )
+        User.objects.filter(pk=utilizador_anterior.pk).update(
+            date_joined=agora - timedelta(days=9)
+        )
+        User.objects.filter(pk=utilizador_atual.pk).update(
+            date_joined=agora - timedelta(days=2)
+        )
+        self.client.force_authenticate(self.admin_user)
+
+        resposta = self.client.get(reverse("admin-dashboard"), {"period": 7})
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        comparacao = resposta.data["period_comparison"]
+        registrations = comparacao["metrics"]["registrations"]
+        self.assertEqual(comparacao["period_days"], 7)
+        self.assertEqual(registrations["current"], resposta.data["analytics"]["summary"]["registrations"])
+        self.assertEqual(registrations["previous"], 1)
+        self.assertEqual(
+            registrations["change"],
+            registrations["current"] - registrations["previous"],
+        )
+        self.assertEqual(len(resposta.data["analytics"]["series"]), 7)
+        analise = resposta.data["analytics"]["analysis"]
+        self.assertEqual(analise["method"], "ordinary_least_squares")
+        self.assertEqual(analise["rolling_window_days"], 7)
+        self.assertEqual(
+            analise["metrics"]["registrations"]["total"],
+            registrations["current"],
+        )
+        self.assertIn("registrations_average_7d", resposta.data["analytics"]["series"][-1])
+        self.assertEqual(
+            sum(item["registrations"] for item in resposta.data["analytics"]["series"]),
+            registrations["current"],
+        )
+
+    def test__funil_de_pedidos_usa_a_coorte_do_periodo_e_calcula_conversoes(self):
+        ServiceOrder.objects.create(
+            client=self.other_client,
+            category=self.category,
+            title="Instalar equipamento",
+            description="Pedido ainda sem propostas.",
+            municipality=self.order.municipality,
+            municipality_name_snapshot=self.order.municipality_name_snapshot,
+            province_name_snapshot=self.order.province_name_snapshot,
+        )
+        self.client.force_authenticate(self.admin_user)
+
+        resposta = self.client.get(reverse("admin-dashboard"), {"period": 7})
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        funil = resposta.data["service_order_funnel"]
+        self.assertEqual(
+            [etapa["count"] for etapa in funil["stages"]],
+            [2, 1, 1, 1],
+        )
+        self.assertEqual(
+            [etapa["conversion_from_previous"] for etapa in funil["stages"]],
+            [None, 50.0, 100.0, 100.0],
+        )
+        self.assertEqual(
+            funil["cohort_start"],
+            resposta.data["period_comparison"]["current_start"],
+        )
+        self.assertEqual(
+            funil["cohort_end"],
+            resposta.data["period_comparison"]["current_end"],
+        )
+
+    def test__funil_de_pedidos_devolve_etapas_vazias_sem_divisao_por_zero(self):
+        ServiceOrder.objects.filter(pk=self.order.pk).update(
+            created_at=timezone.now() - timedelta(days=8)
+        )
+        self.client.force_authenticate(self.admin_user)
+
+        resposta = self.client.get(reverse("admin-dashboard"), {"period": 7})
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            [etapa["count"] for etapa in resposta.data["service_order_funnel"]["stages"]],
+            [0, 0, 0, 0],
+        )
+        self.assertEqual(
+            [
+                etapa["conversion_from_previous"]
+                for etapa in resposta.data["service_order_funnel"]["stages"]
+            ],
+            [None, None, None, None],
+        )
+
+    def test__analise_temporal_calcula_media_movel_e_tendencia(self):
+        serie = [
+            {"date": f"2025-01-{dia:02d}", "views": dia - 1}
+            for dia in range(1, 8)
+        ]
+
+        resultado = _analisar_series_temporais(serie, ["views"])
+
+        self.assertEqual(resultado["method"], "ordinary_least_squares")
+        self.assertEqual(resultado["rolling_window_days"], 7)
+        self.assertEqual(resultado["metrics"]["views"]["total"], 21)
+        self.assertEqual(resultado["metrics"]["views"]["daily_average"], 3)
+        self.assertEqual(resultado["metrics"]["views"]["active_days"], 6)
+        self.assertEqual(resultado["metrics"]["views"]["zero_days"], 1)
+        self.assertEqual(resultado["metrics"]["views"]["trend_per_day"], 1)
+        self.assertEqual(resultado["metrics"]["views"]["trend_direction"], "increasing")
+        self.assertEqual(resultado["metrics"]["views"]["r_squared"], 1)
+        self.assertEqual(resultado["series"][-1]["views_average_7d"], 3)
+
+    def test__analise_temporal_identifica_series_constantes_e_sem_variancia(self):
+        serie = [
+            {"date": f"2025-01-{dia:02d}", "registrations": 0}
+            for dia in range(1, 4)
+        ]
+
+        resultado = _analisar_series_temporais(serie, ["registrations"])
+
+        self.assertEqual(resultado["metrics"]["registrations"]["total"], 0)
+        self.assertEqual(resultado["metrics"]["registrations"]["trend_direction"], "stable")
+        self.assertEqual(
+            resultado["metrics"]["registrations"]["daily_standard_deviation"],
+            0,
+        )
+        self.assertIsNone(resultado["metrics"]["registrations"]["r_squared"])
+        self.assertEqual(
+            [item["registrations_average_7d"] for item in resultado["series"]],
+            [None, None, None],
+        )
+
+    def test__analise_temporal_identifica_tendencia_decrescente(self):
+        serie = [
+            {"date": f"2025-01-{dia:02d}", "views": 7 - dia}
+            for dia in range(1, 8)
+        ]
+
+        resultado = _analisar_series_temporais(serie, ["views"])
+
+        self.assertEqual(resultado["metrics"]["views"]["trend_per_day"], -1)
+        self.assertEqual(resultado["metrics"]["views"]["trend_direction"], "decreasing")
+        self.assertEqual(resultado["metrics"]["views"]["r_squared"], 1)
 
     def test__periodo_de_analise_e_validado(self):
         self.client.force_authenticate(self.admin_user)

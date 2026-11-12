@@ -2634,6 +2634,329 @@
   color: #1769aa;
 }
 
+@keyframes loginCityDrift {
+  from {
+    transform: scale(1.02) translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: scale(1.1) translate3d(-0.7%, -0.5%, 0);
+  }
+}
+
+.loginPage {
+  min-height: 100svh;
+  background: #f5f8fc;
+}
+
+.loginPage .authLayout {
+  min-height: 100svh;
+  grid-template-columns: minmax(0, 0.96fr) minmax(0, 1.04fr);
+  overflow: clip;
+  background: #f7f9fc;
+}
+
+.loginShowcase {
+  min-height: 100svh;
+  padding: clamp(30px, 5vw, 72px);
+  background: #0a192f;
+}
+
+.loginShowcase::before {
+  z-index: -1;
+  inset: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  background:
+    linear-gradient(90deg, rgb(5 20 41 / 78%), rgb(7 34 66 / 47%) 68%, rgb(7 34 66 / 30%)),
+    linear-gradient(0deg, rgb(3 18 39 / 68%), transparent 58%);
+  opacity: 1;
+  content: "";
+}
+
+.loginShowcase::after {
+  z-index: -2;
+  inset: -2%;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  background: url("/login-luanda.jpg") center 52% / cover no-repeat;
+  transform: scale(1.02);
+  opacity: 1;
+  animation: loginCityDrift 24s ease-in-out infinite alternate;
+  content: "";
+}
+
+.loginOrbs span {
+  border-color: rgb(222 238 255 / 13%);
+  background: linear-gradient(145deg, rgb(255 255 255 / 8%), transparent 65%);
+  box-shadow: none;
+}
+
+.loginShowcaseCopy h2 {
+  max-width: 570px;
+  font-size: clamp(36px, 4vw, 57px);
+  letter-spacing: -2.2px;
+  text-wrap: balance;
+}
+
+.loginShowcaseCopy > span {
+  max-width: 430px;
+  color: #e4edf9;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.loginShowcase li {
+  color: #f4f8ff;
+}
+
+.loginShowcase li span {
+  flex: 0 0 25px;
+  background: rgb(255 255 255 / 8%);
+}
+
+.loginFormPane {
+  min-height: 100svh;
+  padding: clamp(24px, 5vw, 68px);
+  background:
+    radial-gradient(ellipse at 92% 10%, rgb(47 121 213 / 8%), transparent 30rem),
+    #f7f9fc;
+}
+
+.loginFormPane::before {
+  right: -200px;
+  bottom: -240px;
+  border-color: rgb(28 105 190 / 7%);
+  box-shadow: 0 0 0 44px rgb(28 105 190 / 2%), 0 0 0 92px rgb(28 105 190 / 2%);
+}
+
+.loginCard {
+  padding: clamp(26px, 3.2vw, 42px);
+  border-color: #e4eaf3;
+  border-radius: 24px;
+  background: rgb(255 255 255 / 95%);
+  box-shadow: 0 26px 72px rgb(20 45 80 / 9%), 0 4px 14px rgb(20 45 80 / 3%);
+  backdrop-filter: blur(18px);
+  animation: loginRise 750ms var(--motion-smooth) both;
+}
+
+.loginHeader {
+  margin-bottom: 30px;
+}
+
+.authFormInner .authTabs {
+  border-color: #e6ebf2;
+  background: #f3f6fa;
+}
+
+.loginSecure {
+  white-space: nowrap;
+}
+
+.loginEyebrow {
+  letter-spacing: 0.07em;
+}
+
+.loginCard > h1 {
+  font-size: clamp(30px, 3vw, 39px);
+  letter-spacing: -1.6px;
+}
+
+.loginIntro {
+  margin-bottom: 25px;
+}
+
+.loginField {
+  gap: 9px;
+}
+
+.loginField .loginInputWrap input {
+  min-height: 56px;
+  border-color: #dfe7f1;
+  border-radius: 12px;
+  background: #f7f9fc;
+}
+
+.loginField .loginInputWrap input[aria-invalid="true"] {
+  border-color: #dc7676;
+  background: #fffafa;
+}
+
+.loginField .loginInputWrap input[aria-invalid="true"]:focus {
+  box-shadow: 0 0 0 4px rgb(220 118 118 / 10%);
+}
+
+.loginCard .notice {
+  border: 1px solid #f3d4d0;
+  border-radius: 10px;
+  animation: loginRise 250ms var(--motion-smooth) both;
+}
+
+.loginSubmit {
+  background: linear-gradient(105deg, #176db1, #1769aa);
+  box-shadow: 0 10px 24px rgb(23 105 170 / 20%);
+}
+
+.loginSubmit:hover {
+  background: linear-gradient(105deg, #12619f, #125b98);
+  box-shadow: 0 15px 28px rgb(23 105 170 / 26%);
+}
+
+.loginSubmit:disabled {
+  cursor: progress;
+  filter: saturate(0.82);
+}
+
+.loginFooter {
+  gap: 17px;
+  margin-top: 23px;
+  line-height: 1.6;
+}
+
+.loginShowcaseFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.loginPhotoCredit {
+  display: inline-flex;
+  color: rgb(231 240 251 / 76%);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.loginPhotoCredit a {
+  color: inherit;
+  text-decoration-color: rgb(231 240 251 / 40%);
+  text-underline-offset: 3px;
+  transition: color 200ms var(--motion-smooth);
+}
+
+.loginPhotoCredit a:hover {
+  color: #fff;
+}
+
+@media (max-width: 680px) {
+  .loginPage .authLayout {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    background: #f5f8fc;
+  }
+
+  .loginPage .loginShowcase {
+    display: flex;
+    min-height: 0;
+    height: auto;
+    max-height: none;
+    flex: 0 0 auto;
+    gap: 24px;
+    padding: 22px 22px 68px;
+  }
+
+  .loginPage .loginShowcase > .brand {
+    align-self: flex-start;
+  }
+
+  .loginShowcaseCopy {
+    margin: auto 0 0;
+  }
+
+  .loginShowcaseCopy > p {
+    margin-bottom: 9px;
+    font-size: 10px;
+  }
+
+  .loginShowcaseCopy h2 {
+    max-width: 470px;
+    margin-bottom: 10px;
+    font-size: clamp(25px, 7vw, 34px);
+    letter-spacing: -1.1px;
+  }
+
+  .loginShowcaseCopy > span {
+    max-width: 470px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .loginShowcase ul,
+  .loginShowcaseFooter > small {
+    display: none;
+  }
+
+  .loginShowcaseFooter {
+    justify-content: flex-start;
+  }
+
+  .loginPhotoCredit {
+    font-size: 9px;
+  }
+
+  .loginFormPane {
+    min-height: 0;
+    flex: 1;
+    place-items: start center;
+    margin-top: -40px;
+    padding: 0 16px 30px;
+    overflow: visible;
+    background: transparent;
+  }
+
+  .loginFormPane::before {
+    display: none;
+  }
+
+  .loginFormInner {
+    z-index: 1;
+    width: min(490px, 100%);
+  }
+
+  .loginCard {
+    padding: clamp(23px, 6vw, 32px);
+    border-radius: 20px;
+    box-shadow: 0 22px 54px rgb(20 45 80 / 12%), 0 3px 12px rgb(20 45 80 / 4%);
+  }
+
+  .loginHeader {
+    margin-bottom: 27px;
+  }
+}
+
+@media (max-width: 380px) {
+  .loginPage .loginShowcase {
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+
+  .loginPage .loginFormPane {
+    padding-right: 12px;
+    padding-left: 12px;
+  }
+
+  .loginSecure {
+    gap: 4px;
+    font-size: 9px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loginShowcase::after,
+  .loginCard {
+    animation: none;
+  }
+}
+
 .workspacePage .intro {
   color: #687970;
 }
@@ -4123,5 +4446,257 @@
   .companyBarRow {
     grid-template-columns: 68px minmax(0, 1fr) 24px;
     gap: 7px;
+  }
+}
+
+@keyframes workspace-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 18px, 0) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+}
+
+.workspaceSidebar {
+  isolation: isolate;
+  border: 1px solid rgb(255 255 255 / 8%);
+  background:
+    radial-gradient(ellipse at 12% 0%, rgb(37 99 235 / 26%), transparent 42%),
+    linear-gradient(155deg, #10213b 0%, #09172b 58%, #0c2340 100%);
+  box-shadow:
+    0 24px 55px rgb(7 20 40 / 22%),
+    inset 0 1px rgb(255 255 255 / 5%);
+}
+
+.workspaceSidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
+.workspaceSidebar .brandMark {
+  background: linear-gradient(145deg, #4e9aff, #075be0);
+  box-shadow: 0 8px 20px rgb(0 102 255 / 32%);
+  transition: transform 360ms var(--motion-smooth), box-shadow 360ms var(--motion-smooth);
+}
+
+.workspaceSidebar .brand:hover .brandMark {
+  transform: rotate(-7deg) scale(1.06);
+  box-shadow: 0 11px 26px rgb(0 102 255 / 42%);
+}
+
+.sidebarProfile {
+  border-color: rgb(255 255 255 / 10%);
+  background: linear-gradient(120deg, rgb(255 255 255 / 8%), rgb(255 255 255 / 3%));
+  box-shadow: inset 0 1px rgb(255 255 255 / 4%);
+}
+
+.workspaceLink {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid transparent;
+  transition:
+    color 240ms var(--motion-smooth),
+    background-color 240ms var(--motion-smooth),
+    border-color 240ms var(--motion-smooth),
+    box-shadow 280ms var(--motion-smooth),
+    transform 280ms var(--motion-spring);
+}
+
+.workspaceLink:hover {
+  transform: translateX(4px);
+  border-color: rgb(255 255 255 / 8%);
+  background: rgb(255 255 255 / 8%);
+}
+
+.workspaceLink[aria-current="page"] {
+  border-color: rgb(255 255 255 / 12%);
+  background: linear-gradient(105deg, #1769e8, #3988ff);
+  box-shadow: 0 9px 22px rgb(0 102 255 / 28%), inset 0 1px rgb(255 255 255 / 18%);
+}
+
+.workspaceLink[aria-current="page"] .navLetter {
+  transform: scale(1.08);
+}
+
+.navLetter {
+  transition: transform 280ms var(--motion-spring), color 220ms var(--motion-smooth);
+}
+
+.sidebarCreate {
+  border-color: rgb(128 179 255 / 30%);
+  background: linear-gradient(110deg, rgb(37 99 235 / 24%), rgb(255 255 255 / 7%));
+  box-shadow: inset 0 1px rgb(255 255 255 / 7%);
+}
+
+.sidebarCreate:hover {
+  transform: translateY(-2px);
+  border-color: rgb(128 179 255 / 54%);
+  background: linear-gradient(110deg, rgb(37 99 235 / 38%), rgb(255 255 255 / 9%));
+  box-shadow: 0 10px 24px rgb(0 0 0 / 16%);
+}
+
+.sidebarNote {
+  border-color: rgb(255 255 255 / 10%);
+  background:
+    radial-gradient(circle at 100% 0%, rgb(37 99 235 / 24%), transparent 55%),
+    linear-gradient(145deg, rgb(29 62 103 / 74%), rgb(15 39 72 / 85%));
+  transition: border-color 260ms var(--motion-smooth), transform 320ms var(--motion-spring);
+}
+
+.sidebarNote:hover {
+  transform: translateY(-3px);
+  border-color: rgb(128 179 255 / 30%);
+}
+
+.sidebarBottom button:hover:not(:disabled) {
+  transform: translateX(3px);
+  border-color: rgb(255 255 255 / 18%);
+}
+
+.workspaceMain {
+  animation: workspace-enter 720ms var(--motion-smooth) both;
+}
+
+.workspacePage .workspaceMain > .accountCard h1 {
+  letter-spacing: -1.35px;
+}
+
+.workspacePage .dashboardStats > div {
+  position: relative;
+  overflow: hidden;
+  border-color: #e5ebf4;
+  background: linear-gradient(145deg, #fff, #fbfdff);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 4%);
+  transition:
+    border-color 280ms var(--motion-smooth),
+    box-shadow 320ms var(--motion-smooth),
+    transform 320ms var(--motion-spring);
+}
+
+.workspacePage .dashboardStats > div:hover {
+  transform: translateY(-5px);
+  border-color: #b7d1f6;
+  box-shadow: 0 18px 34px rgb(15 49 98 / 10%);
+}
+
+.workspacePage .dashboardStats > div::after {
+  position: absolute;
+  right: -24px;
+  bottom: -36px;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(37 99 235 / 8%), transparent 70%);
+  content: "";
+  pointer-events: none;
+  transition: transform 500ms var(--motion-smooth);
+}
+
+.workspacePage .dashboardStats > div:hover::after {
+  transform: scale(1.5);
+}
+
+.workspacePage .dashboardSection,
+.workspacePage .feedSection,
+.workspacePage .companyPanel,
+.workspacePage .profileSection,
+.asideCard,
+.promoCard {
+  border-color: #e6ebf3;
+  box-shadow: 0 8px 26px rgb(15 23 42 / 4%);
+}
+
+.workspacePage .dashboardLinks a,
+.workspacePage .activityCard,
+.featuredProvider,
+.asideCard > .asideLink,
+.companyQuickLinks a {
+  transition:
+    background-color 260ms var(--motion-smooth),
+    border-color 260ms var(--motion-smooth),
+    box-shadow 300ms var(--motion-smooth),
+    transform 300ms var(--motion-spring);
+}
+
+.workspacePage .dashboardLinks a:hover,
+.featuredProvider:hover {
+  transform: translateY(-4px);
+  border-color: #bfd5f8;
+  box-shadow: 0 14px 28px rgb(15 49 98 / 9%);
+}
+
+.workspacePage .activityCard:hover {
+  transform: translateX(3px);
+  border-color: #bfd5f8;
+  background: #f6f9ff;
+}
+
+.asideCard > .asideLink:hover {
+  transform: translateX(4px);
+  border-color: #e1eaff;
+  background: #f5f8ff;
+}
+
+.asideLinkIcon {
+  transition:
+    color 260ms var(--motion-smooth),
+    border-color 260ms var(--motion-smooth),
+    background-color 260ms var(--motion-smooth),
+    transform 300ms var(--motion-spring);
+}
+
+.asideLink:hover .asideLinkIcon {
+  transform: scale(1.08) rotate(-4deg);
+  border-color: #c9dcf9;
+  background: #eaf2ff;
+}
+
+.workspacePage .workspaceHeader {
+  border-bottom-color: rgb(226 232 240 / 75%);
+  background: rgb(255 255 255 / 84%);
+  box-shadow: 0 8px 24px rgb(15 23 42 / 3%);
+  backdrop-filter: blur(18px);
+}
+
+.workspacePage .createAction {
+  background: linear-gradient(110deg, #1769e8, #3988ff);
+  box-shadow: 0 8px 18px rgb(37 99 235 / 20%);
+  transition:
+    box-shadow 280ms var(--motion-smooth),
+    transform 280ms var(--motion-spring),
+    background-color 220ms var(--motion-smooth);
+}
+
+.workspacePage .createAction:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 13px 25px rgb(37 99 235 / 30%);
+}
+
+.workspacePage .mobileNav {
+  border-color: rgb(226 232 240 / 88%);
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 0 18px 44px rgb(10 25 47 / 18%);
+  backdrop-filter: blur(22px) saturate(1.35);
+}
+
+.mobileNav .workspaceLink {
+  transition:
+    color 240ms var(--motion-smooth),
+    background-color 240ms var(--motion-smooth),
+    transform 260ms var(--motion-spring);
+}
+
+.mobileNav .workspaceLink[aria-current="page"] {
+  background: linear-gradient(145deg, #eaf2ff, #f3f7ff);
+  color: #075be0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspaceMain {
+    animation: none;
   }
 }

@@ -53,6 +53,60 @@ def _contagens_diarias(queryset, *, campo_data, inicio_data_hora):
     }
 
 
+def _contagem_periodo(queryset, *, campo_data, inicio_data_hora, fim_data_hora):
+    return queryset.filter(
+        **{
+            f"{campo_data}__gte": inicio_data_hora,
+            f"{campo_data}__lt": fim_data_hora,
+        }
+    ).count()
+
+
+def _funil_pedidos_servico(*, inicio, fim):
+    pedidos = ServiceOrder.objects.filter(created_at__gte=inicio, created_at__lt=fim)
+    etapas = [
+        ("orders", "Pedidos criados", pedidos.count()),
+        (
+            "proposals",
+            "Com proposta",
+            pedidos.filter(proposals__isnull=False).distinct().count(),
+        ),
+        (
+            "bookings",
+            "Contratados",
+            pedidos.filter(booking__isnull=False).count(),
+        ),
+        (
+            "completed",
+            "Concluídos",
+            pedidos.filter(booking__status=Booking.Status.COMPLETED).count(),
+        ),
+    ]
+
+    resultado = []
+    etapa_anterior = None
+    for chave, nome, total in etapas:
+        resultado.append(
+            {
+                "key": chave,
+                "name": nome,
+                "count": total,
+                "conversion_from_previous": (
+                    round(total * 100 / etapa_anterior, 1)
+                    if etapa_anterior
+                    else None
+                ),
+            }
+        )
+        etapa_anterior = total
+
+    return {
+        "cohort_start": timezone.localdate(inicio).isoformat(),
+        "cohort_end": (timezone.localdate(fim) - timedelta(days=1)).isoformat(),
+        "stages": resultado,
+    }
+
+
 def _criar_serie_diaria(*, inicio, dias, valores):
     indice = pd.date_range(start=inicio, periods=dias, freq="D")
     serie = pd.DataFrame(index=indice)
@@ -69,6 +123,74 @@ def _criar_serie_diaria(*, inicio, dias, valores):
         }
         for data, linha in serie.iterrows()
     ]
+
+
+def _analisar_series_temporais(series, metricas, *, janela=7):
+    """Apply rolling averages and descriptive linear trends to daily counts."""
+    quadro = pd.DataFrame(series)
+    analise = {}
+
+    for metrica in metricas:
+        valores = quadro[metrica].astype("float64")
+        dias = pd.Series(range(len(valores)), dtype="float64")
+        media = float(valores.mean()) if len(valores) else 0.0
+        desvio_padrao = (
+            float(valores.std(ddof=1))
+            if len(valores) > 1
+            else None
+        )
+
+        variacao_dias = dias - dias.mean()
+        soma_quadrados_dias = float((variacao_dias**2).sum())
+        declive = (
+            float((variacao_dias * (valores - media)).sum() / soma_quadrados_dias)
+            if soma_quadrados_dias
+            else 0.0
+        )
+        correlacao = valores.corr(dias) if valores.nunique() > 1 else None
+        r_quadrado = (
+            float(correlacao**2)
+            if correlacao is not None and pd.notna(correlacao)
+            else None
+        )
+
+        quadro[f"{metrica}_average_7d"] = valores.rolling(
+            window=janela,
+            min_periods=janela,
+        ).mean()
+        analise[metrica] = {
+            "total": int(valores.sum()),
+            "daily_average": round(media, 2),
+            "daily_standard_deviation": (
+                round(desvio_padrao, 2) if desvio_padrao is not None else None
+            ),
+            "active_days": int((valores > 0).sum()),
+            "zero_days": int((valores == 0).sum()),
+            "trend_per_day": round(declive, 4),
+            "trend_direction": (
+                "increasing" if declive > 0 else "decreasing" if declive < 0 else "stable"
+            ),
+            "r_squared": round(r_quadrado, 4) if r_quadrado is not None else None,
+        }
+
+    serie_resultado = []
+    for _, linha in quadro.iterrows():
+        registo = {"date": linha["date"]}
+        for coluna, valor in linha.items():
+            if coluna == "date":
+                continue
+            if coluna.endswith("_average_7d"):
+                registo[coluna] = round(float(valor), 2) if pd.notna(valor) else None
+            else:
+                registo[coluna] = int(valor)
+        serie_resultado.append(registo)
+
+    return {
+        "method": "ordinary_least_squares",
+        "rolling_window_days": janela,
+        "metrics": analise,
+        "series": serie_resultado,
+    }
 
 
 def _publicacoes_ativas(provider=None):
@@ -229,6 +351,14 @@ def construir_painel_administrativo(*, periodo=30):
     agora = timezone.now()
     inicio_periodo = agora - timedelta(days=365)
     inicio_serie, inicio_serie_data_hora = _inicio_periodo(agora=agora, dias=periodo)
+    fim_serie = inicio_serie + timedelta(days=periodo)
+    fim_serie_data_hora = inicio_serie_data_hora + timedelta(days=periodo)
+    funil_pedidos_servico = _funil_pedidos_servico(
+        inicio=inicio_serie_data_hora,
+        fim=fim_serie_data_hora,
+    )
+    inicio_periodo_anterior = inicio_serie - timedelta(days=periodo)
+    inicio_periodo_anterior_data_hora = inicio_serie_data_hora - timedelta(days=periodo)
     servicos_publicados, produtos_publicados = _publicacoes_ativas()
 
     utilizadores_por_mes = {
@@ -239,7 +369,16 @@ def construir_painel_administrativo(*, periodo=30):
         .annotate(total=Count("pk"))
         .order_by("mes")
     }
+    empresas_por_mes = {
+        linha["mes"].strftime("%Y-%m"): linha["total"]
+        for linha in BusinessProfile.objects.filter(created_at__gte=inicio_periodo)
+        .annotate(mes=TruncMonth("created_at"))
+        .values("mes")
+        .annotate(total=Count("pk"))
+        .order_by("mes")
+    }
     meses = []
+    crescimento_empresas = []
     mes_atual = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
     for deslocamento in range(11, -1, -1):
         ano = mes_atual.year
@@ -249,6 +388,9 @@ def construir_painel_administrativo(*, periodo=30):
             ano -= 1
         chave = f"{ano:04d}-{mes:02d}"
         meses.append({"month": chave, "users": utilizadores_por_mes.get(chave, 0)})
+        crescimento_empresas.append(
+            {"month": chave, "businesses": empresas_por_mes.get(chave, 0)}
+        )
 
     distribuicao_categorias = list(
         Category.objects.filter(is_active=True)
@@ -285,6 +427,12 @@ def construir_painel_administrativo(*, periodo=30):
         verification_submitted_at__isnull=False,
         user__is_active=True,
     )
+    empresas_pendentes = BusinessProfile.objects.filter(
+        provider__verification_status=Provider.VerificationStatus.PENDING,
+        provider__verification_submitted_at__isnull=False,
+        provider__user__is_active=True,
+    )
+    servicos_inativos = Service.objects.filter(is_active=False)
     utilizadores_recentes = User.objects.order_by("-date_joined", "-pk")[:6]
     atividades = ProviderVerificationAuditEvent.objects.select_related("actor").order_by(
         "-created_at", "-pk"
@@ -335,25 +483,117 @@ def construir_painel_administrativo(*, periodo=30):
             ),
         },
     )
+    analise_series = _analisar_series_temporais(
+        series,
+        (chave for chave in series[0] if chave != "date"),
+    )
+    series = analise_series["series"]
     metricas_periodo = {
-        "registrations": User.objects.filter(date_joined__gte=inicio_serie_data_hora).count(),
-        "publications": (
-            servicos_publicados.filter(created_at__gte=inicio_serie_data_hora).count()
-            + produtos_publicados.filter(created_at__gte=inicio_serie_data_hora).count()
+        "registrations": _contagem_periodo(
+            User.objects.all(),
+            campo_data="date_joined",
+            inicio_data_hora=inicio_serie_data_hora,
+            fim_data_hora=fim_serie_data_hora,
         ),
-        "service_orders": ServiceOrder.objects.filter(
-            created_at__gte=inicio_serie_data_hora
-        ).count(),
-        "product_orders": ProductOrder.objects.filter(
-            created_at__gte=inicio_serie_data_hora
-        ).count(),
-        "conversations": Conversation.objects.filter(
-            created_at__gte=inicio_serie_data_hora
-        ).count(),
-        "views": ListingView.objects.filter(
-            viewed_at__gte=inicio_serie_data_hora
-        ).count(),
+        "publications": (
+            _contagem_periodo(
+                servicos_publicados,
+                campo_data="created_at",
+                inicio_data_hora=inicio_serie_data_hora,
+                fim_data_hora=fim_serie_data_hora,
+            )
+            + _contagem_periodo(
+                produtos_publicados,
+                campo_data="created_at",
+                inicio_data_hora=inicio_serie_data_hora,
+                fim_data_hora=fim_serie_data_hora,
+            )
+        ),
+        "service_orders": _contagem_periodo(
+            ServiceOrder.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_serie_data_hora,
+            fim_data_hora=fim_serie_data_hora,
+        ),
+        "product_orders": _contagem_periodo(
+            ProductOrder.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_serie_data_hora,
+            fim_data_hora=fim_serie_data_hora,
+        ),
+        "conversations": _contagem_periodo(
+            Conversation.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_serie_data_hora,
+            fim_data_hora=fim_serie_data_hora,
+        ),
+        "views": _contagem_periodo(
+            ListingView.objects.all(),
+            campo_data="viewed_at",
+            inicio_data_hora=inicio_serie_data_hora,
+            fim_data_hora=fim_serie_data_hora,
+        ),
     }
+    metricas_periodo_anterior = {
+        "registrations": _contagem_periodo(
+            User.objects.all(),
+            campo_data="date_joined",
+            inicio_data_hora=inicio_periodo_anterior_data_hora,
+            fim_data_hora=inicio_serie_data_hora,
+        ),
+        "publications": (
+            _contagem_periodo(
+                servicos_publicados,
+                campo_data="created_at",
+                inicio_data_hora=inicio_periodo_anterior_data_hora,
+                fim_data_hora=inicio_serie_data_hora,
+            )
+            + _contagem_periodo(
+                produtos_publicados,
+                campo_data="created_at",
+                inicio_data_hora=inicio_periodo_anterior_data_hora,
+                fim_data_hora=inicio_serie_data_hora,
+            )
+        ),
+        "service_orders": _contagem_periodo(
+            ServiceOrder.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_periodo_anterior_data_hora,
+            fim_data_hora=inicio_serie_data_hora,
+        ),
+        "product_orders": _contagem_periodo(
+            ProductOrder.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_periodo_anterior_data_hora,
+            fim_data_hora=inicio_serie_data_hora,
+        ),
+        "conversations": _contagem_periodo(
+            Conversation.objects.all(),
+            campo_data="created_at",
+            inicio_data_hora=inicio_periodo_anterior_data_hora,
+            fim_data_hora=inicio_serie_data_hora,
+        ),
+        "views": _contagem_periodo(
+            ListingView.objects.all(),
+            campo_data="viewed_at",
+            inicio_data_hora=inicio_periodo_anterior_data_hora,
+            fim_data_hora=inicio_serie_data_hora,
+        ),
+    }
+    comparacao_periodo = {}
+    for metrica, atual in metricas_periodo.items():
+        anterior = metricas_periodo_anterior[metrica]
+        variacao = atual - anterior
+        comparacao_periodo[metrica] = {
+            "current": atual,
+            "previous": anterior,
+            "change": variacao,
+            "change_percent": (
+                round(variacao * 100 / anterior, 1)
+                if anterior
+                else (0 if atual == 0 else None)
+            ),
+        }
 
     return {
         "summary": {
@@ -371,13 +611,30 @@ def construir_painel_administrativo(*, periodo=30):
                 date_joined__gte=agora - timedelta(days=30)
             ).count(),
             "verifications_pending": verificacoes_pendentes.count(),
+            "business_verifications_pending": empresas_pendentes.count(),
+            "inactive_services": servicos_inativos.count(),
         },
         "analytics": {
             "period_days": periodo,
             "summary": metricas_periodo,
             "series": series,
+            "analysis": {
+                "method": analise_series["method"],
+                "rolling_window_days": analise_series["rolling_window_days"],
+                "metrics": analise_series["metrics"],
+            },
         },
+        "period_comparison": {
+            "period_days": periodo,
+            "current_start": inicio_serie.isoformat(),
+            "current_end": (fim_serie - timedelta(days=1)).isoformat(),
+            "previous_start": inicio_periodo_anterior.isoformat(),
+            "previous_end": (inicio_serie - timedelta(days=1)).isoformat(),
+            "metrics": comparacao_periodo,
+        },
+        "service_order_funnel": funil_pedidos_servico,
         "user_growth": meses,
+        "business_growth": crescimento_empresas,
         "services_by_category": categorias,
         "recent_users": [
             {
@@ -397,6 +654,30 @@ def construir_painel_administrativo(*, periodo=30):
             }
             for prestador in verificacoes_pendentes.select_related("user").order_by(
                 "verification_submitted_at", "pk"
+            )[:8]
+        ],
+        "pending_businesses": [
+            {
+                "id": empresa.pk,
+                "name": empresa.provider.commercial_name,
+                "registered_name": empresa.registered_name,
+                "email": empresa.provider.user.email,
+                "submitted_at": empresa.provider.verification_submitted_at,
+            }
+            for empresa in empresas_pendentes.select_related(
+                "provider",
+                "provider__user",
+            ).order_by("provider__verification_submitted_at", "pk")[:8]
+        ],
+        "inactive_services": [
+            {
+                "id": servico.pk,
+                "name": servico.name,
+                "provider_name": servico.provider.commercial_name,
+                "created_at": servico.created_at,
+            }
+            for servico in servicos_inativos.select_related("provider").order_by(
+                "-created_at", "-pk"
             )[:8]
         ],
         "recent_activity": [

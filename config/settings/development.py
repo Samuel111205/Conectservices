@@ -3,7 +3,7 @@ import os
 from .base import *
 
 DEBUG = True
-WEB_APP_URL = os.environ.get("WEB_APP_URL") or "http://localhost:3000"
+WEB_APP_URL = os.environ.get("WEB_APP_URL") or "http://localhost:5173"
 SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "local-development-only-not-for-production",
@@ -20,7 +20,15 @@ CORS_ALLOWED_ORIGINS = [
     origin.strip()
     for origin in os.environ.get(
         "CORS_ALLOWED_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip()
+    for origin in os.environ.get(
+        "CSRF_TRUSTED_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
     ).split(",")
     if origin.strip()
 ]

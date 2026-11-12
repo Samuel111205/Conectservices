@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+from rest_framework.test import APIClient, APITestCase
 
 User = get_user_model()
 
@@ -79,6 +79,96 @@ class AuthenticationApiTests(APITestCase):
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         self.assertIn("access", resposta.data)
         self.assertIn("refresh", resposta.data)
+
+
+class WebSessionAuthenticationTests(APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.client = APIClient(enforce_csrf_checks=True)
+        self.password = "Web-Session-Password-789!"
+        self.user = User.objects.create_user(
+            "web-client@example.com",
+            self.password,
+            phone="+244923111222",
+        )
+
+    def csrf_token(self):
+        self.client.get(reverse("auth-web-csrf"))
+        return self.client.cookies["csrftoken"].value
+
+    def test__web_login_sets_http_only_session_cookie_without_returning_jwts(self):
+        token = self.csrf_token()
+        response = self.client.post(
+            reverse("auth-web-session"),
+            {"email": self.user.email, "password": self.password},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertNotIn("access", response.data)
+        self.assertNotIn("refresh", response.data)
+        self.assertTrue(response.cookies["sessionid"]["httponly"])
+
+        account = self.client.get(reverse("auth-me"))
+        self.assertEqual(account.status_code, status.HTTP_200_OK)
+        self.assertEqual(account.data["email"], self.user.email)
+
+    def test__web_login_and_authenticated_writes_require_csrf(self):
+        response = self.client.post(
+            reverse("auth-web-session"),
+            {"email": self.user.email, "password": self.password},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+        token = self.csrf_token()
+        login_response = self.client.post(
+            reverse("auth-web-session"),
+            {"email": self.user.email, "password": self.password},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        token = self.client.cookies["csrftoken"].value
+
+        update_without_csrf = self.client.patch(
+            reverse("auth-me"),
+            {"phone": "+244923333444"},
+            format="json",
+        )
+        self.assertEqual(update_without_csrf.status_code, status.HTTP_403_FORBIDDEN)
+
+        update_with_csrf = self.client.patch(
+            reverse("auth-me"),
+            {"phone": "+244923333444"},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(update_with_csrf.status_code, status.HTTP_200_OK)
+
+    def test__web_logout_requires_csrf_and_ends_the_session(self):
+        token = self.csrf_token()
+        login_response = self.client.post(
+            reverse("auth-web-session"),
+            {"email": self.user.email, "password": self.password},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+        self.assertEqual(login_response.status_code, status.HTTP_200_OK)
+        token = self.client.cookies["csrftoken"].value
+
+        response = self.client.post(
+            reverse("auth-web-logout"),
+            {},
+            format="json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        account = self.client.get(reverse("auth-me"))
+        self.assertEqual(account.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test__entrar_falha_nao_revelar_account_existence(self):
         known_email_response = self.client.post(

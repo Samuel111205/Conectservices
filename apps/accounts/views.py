@@ -11,8 +11,12 @@ from django.utils.encoding import force_str
 from django.utils.http import urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
+from django.contrib.auth import authenticate, login, logout
 from django.core import signing
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.middleware.csrf import get_token
+from django.utils.decorators import method_decorator
+from django.views.decorators.csrf import csrf_protect
 from rest_framework import serializers
 from rest_framework.throttling import ScopedRateThrottle
 
@@ -199,6 +203,53 @@ class LoginView(TokenObtainPairView):
     authentication_classes = ()
     throttle_classes = (LoginThrottle,)
     throttle_scope = "auth_login"
+
+
+class WebLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class WebCsrfView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+
+    def get(self, request):
+        return Response({"csrf_token": get_token(request)})
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class WebSessionView(APIView):
+    permission_classes = (AllowAny,)
+    authentication_classes = ()
+    throttle_classes = (LoginThrottle,)
+    throttle_scope = "auth_login"
+
+    def post(self, request):
+        serializer = WebLoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data["email"].strip().casefold()
+        user = authenticate(
+            request,
+            email=email,
+            password=serializer.validated_data["password"],
+        )
+        if user is None or not user.email_verified:
+            raise AuthenticationFailed(
+                "No active account found with the given credentials"
+            )
+        login(request, user)
+        return Response({"detail": "Sessão iniciada."})
+
+
+@method_decorator(csrf_protect, name="dispatch")
+class WebLogoutView(APIView):
+    permission_classes = (IsAuthenticated,)
+
+    def post(self, request):
+        logout(request)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RefreshView(TokenRefreshView):
