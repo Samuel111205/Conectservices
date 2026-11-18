@@ -6,7 +6,7 @@ from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
 
-from .models import Booking
+from .models import Booking, Dispute, DisputeMessage, DisputeStatusEvent
 
 
 def _get_booking_for_update(*, booking_id, select_related=()):
@@ -144,7 +144,7 @@ def concluir_contratacao(*, booking_id, actor):
 
 
 @transaction.atomic
-def cancelar_contratacao(*, booking_id, actor):
+def cancelar_contratacao(*, booking_id, actor, reason=""):
     contratacao = _get_booking_for_update(
         booking_id=booking_id,
         select_related=("order", "client", "provider__user"),
@@ -157,8 +157,160 @@ def cancelar_contratacao(*, booking_id, actor):
             "A contratação já iniciada ou concluída não pode ser cancelada por esta ação."
         )
     contratacao.status = Booking.Status.CANCELLED
-    contratacao.save(update_fields=("status", "updated_at"))
+    contratacao.cancellation_reason = reason
+    contratacao.cancelled_by = actor
+    contratacao.cancelled_at = timezone.now()
+    contratacao.save(
+        update_fields=(
+            "status",
+            "cancellation_reason",
+            "cancelled_by",
+            "cancelled_at",
+            "updated_at",
+        )
+    )
     pedido = contratacao.order
     pedido.status = ServiceOrder.Status.CANCELLED
     pedido.save(update_fields=("status", "updated_at"))
     return contratacao
+
+
+@transaction.atomic
+def abrir_disputa(*, booking_id, actor, category, description):
+    contratacao = _get_booking_for_update(
+        booking_id=booking_id,
+        select_related=("client", "provider__user"),
+    )
+    if actor.pk not in (contratacao.client_id, contratacao.provider.user_id):
+        raise PermissionDenied("Só os participantes podem abrir uma disputa.")
+    if Dispute.objects.filter(
+        booking=contratacao,
+        status__in=(Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW),
+    ).exists():
+        raise ValidationError("Esta contratação já tem uma disputa em aberto.")
+
+    disputa = Dispute.objects.create(
+        booking=contratacao,
+        opened_by=actor,
+        category=category,
+        description=description,
+    )
+    DisputeStatusEvent.objects.create(
+        dispute=disputa,
+        actor=actor,
+        previous_status="",
+        new_status=disputa.status,
+        note="Disputa aberta.",
+    )
+    from apps.messaging.services import criar_notificacao_de_caso
+
+    destinatario = (
+        contratacao.provider.user
+        if actor.pk == contratacao.client_id
+        else contratacao.client
+    )
+    criar_notificacao_de_caso(
+        recipient=destinatario,
+        actor=actor,
+        title="Nova disputa",
+        body=f"Foi aberta uma disputa sobre a contratação #{contratacao.pk}.",
+        dispute=disputa,
+    )
+    return disputa
+
+
+@transaction.atomic
+def enviar_mensagem_disputa(*, dispute_id, actor, body):
+    try:
+        disputa = Dispute.objects.select_for_update().select_related(
+            "booking__client", "booking__provider__user"
+        ).get(pk=dispute_id)
+    except Dispute.DoesNotExist as exc:
+        raise NotFound("A disputa indicada não existe.") from exc
+
+    participantes = (
+        disputa.booking.client_id,
+        disputa.booking.provider.user_id,
+    )
+    if not actor.is_staff and actor.pk not in participantes:
+        raise PermissionDenied("Só os participantes e a equipa de apoio podem responder.")
+    if disputa.status not in (Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW):
+        raise ValidationError("Esta disputa já não aceita mensagens.")
+    mensagem = DisputeMessage.objects.create(
+        dispute=disputa,
+        author=actor,
+        body=body,
+    )
+    from apps.messaging.services import criar_notificacao_de_caso
+
+    if actor.is_staff:
+        destinatarios = (disputa.booking.client, disputa.booking.provider.user)
+    elif actor.pk == disputa.booking.client_id:
+        destinatarios = (disputa.booking.provider.user,)
+    else:
+        destinatarios = (disputa.booking.client,)
+    for destinatario in destinatarios:
+        criar_notificacao_de_caso(
+            recipient=destinatario,
+            actor=actor,
+            title="Nova mensagem na disputa",
+            body=f"Há uma nova mensagem na disputa #{disputa.pk}.",
+            dispute=disputa,
+        )
+    return mensagem
+
+
+@transaction.atomic
+def avaliar_disputa(*, dispute_id, actor, status, resolution=""):
+    try:
+        disputa = Dispute.objects.select_for_update().select_related(
+            "booking__client", "booking__provider__user"
+        ).get(pk=dispute_id)
+    except Dispute.DoesNotExist as exc:
+        raise NotFound("A disputa indicada não existe.") from exc
+
+    if not actor.is_staff:
+        raise PermissionDenied("Só a equipa de apoio pode alterar o estado da disputa.")
+    if status not in (Dispute.Status.UNDER_REVIEW, Dispute.Status.RESOLVED, Dispute.Status.CLOSED):
+        raise ValidationError("Estado de análise inválido.")
+    if disputa.status not in (Dispute.Status.OPEN, Dispute.Status.UNDER_REVIEW, Dispute.Status.RESOLVED):
+        raise ValidationError("Esta disputa já está fechada.")
+    if status == Dispute.Status.CLOSED and disputa.status != Dispute.Status.RESOLVED:
+        raise ValidationError("Só é possível fechar uma disputa já resolvida.")
+    if status == Dispute.Status.RESOLVED and not resolution.strip():
+        raise ValidationError({"resolution": "Indica a decisão e a respectiva fundamentação."})
+
+    previous_status = disputa.status
+    disputa.status = status
+    disputa.reviewed_by = actor
+    disputa.resolution = resolution if status == Dispute.Status.RESOLVED else ""
+    disputa.resolved_at = (
+        timezone.now() if status == Dispute.Status.RESOLVED else None
+    )
+    disputa.save(
+        update_fields=(
+            "status",
+            "reviewed_by",
+            "resolution",
+            "resolved_at",
+            "updated_at",
+        )
+    )
+    DisputeStatusEvent.objects.create(
+        dispute=disputa,
+        actor=actor,
+        previous_status=previous_status,
+        new_status=status,
+        note=resolution,
+    )
+    from apps.messaging.services import criar_notificacao_de_caso
+
+    for destinatario in (disputa.booking.client, disputa.booking.provider.user):
+        criar_notificacao_de_caso(
+            recipient=destinatario,
+            actor=actor,
+            title="Actualização da disputa",
+            body=f"A disputa #{disputa.pk} está agora: {disputa.get_status_display()}.",
+            dispute=disputa,
+        )
+    return disputa

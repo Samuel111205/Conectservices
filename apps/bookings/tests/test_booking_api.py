@@ -10,8 +10,10 @@ from rest_framework.test import APITestCase
 
 from apps.catalog.models import Category
 from apps.bookings.models import Booking
+from apps.bookings.models import Dispute, DisputeMessage, DisputeStatusEvent
 from apps.availability.models import WeeklyAvailability
 from apps.locations.models import Municipality, Province
+from apps.messaging.models import Notification
 from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
@@ -279,7 +281,8 @@ class BookingApiTests(APITestCase):
         )
         self.client.force_authenticate(self.provider_user)
         resposta = self.client.post(
-            reverse("booking-cancel", args=(self.booking.pk,))
+            reverse("booking-cancel", args=(self.booking.pk,)),
+            {"reason": "Não estarei disponível na data combinada."},
         )
 
         self.assertEqual(proibido.status_code, status.HTTP_403_FORBIDDEN)
@@ -287,6 +290,9 @@ class BookingApiTests(APITestCase):
         self.booking.refresh_from_db()
         self.order.refresh_from_db()
         self.assertEqual(self.booking.status, Booking.Status.CANCELLED)
+        self.assertEqual(self.booking.cancellation_reason, "Não estarei disponível na data combinada.")
+        self.assertEqual(self.booking.cancelled_by, self.provider_user)
+        self.assertIsNotNone(self.booking.cancelled_at)
         self.assertEqual(self.order.status, ServiceOrder.Status.CANCELLED)
 
     def test__started_contratacao_nao_pode_ser_cancelado(self):
@@ -318,3 +324,88 @@ class BookingApiTests(APITestCase):
         )
 
         self.assertEqual(resposta.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test__participantes_abrem_disputa_e_conversam_com_acesso_limitado(self):
+        url = reverse("dispute-list")
+        payload = {
+            "booking_id": self.booking.pk,
+            "category": Dispute.Category.SERVICE_NOT_DELIVERED,
+            "description": "O serviço não foi prestado na data combinada.",
+        }
+        self.client.force_authenticate(self.outsider)
+        denied = self.client.post(url, payload)
+        self.client.force_authenticate(self.client_user)
+        opened = self.client.post(url, payload)
+
+        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(opened.status_code, status.HTTP_201_CREATED)
+        dispute_id = opened.data["id"]
+        self.assertTrue(
+            DisputeStatusEvent.objects.filter(
+                dispute_id=dispute_id,
+                new_status=Dispute.Status.OPEN,
+            ).exists()
+        )
+        opened_notification = Notification.objects.get(
+            kind=Notification.Kind.DISPUTE,
+            recipient=self.provider_user,
+        )
+        self.assertEqual(opened_notification.dispute_id, dispute_id)
+
+        self.client.force_authenticate(self.provider_user)
+        sent = self.client.post(
+            reverse("dispute-messages", args=(dispute_id,)),
+            {"body": "Vou verificar o sucedido."},
+        )
+        self.assertEqual(sent.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(DisputeMessage.objects.get(pk=sent.data["id"]).author, self.provider_user)
+        self.assertTrue(
+            Notification.objects.filter(
+                kind=Notification.Kind.DISPUTE,
+                recipient=self.client_user,
+                dispute_id=dispute_id,
+            ).exists()
+        )
+
+        self.client.force_authenticate(self.outsider)
+        hidden = self.client.get(reverse("dispute-detail", args=(dispute_id,)))
+        self.assertEqual(hidden.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test__apenas_equipa_de_apoio_pode_resolver_disputa_com_fundamentacao(self):
+        dispute = Dispute.objects.create(
+            booking=self.booking,
+            opened_by=self.client_user,
+            category=Dispute.Category.QUALITY,
+            description="O resultado não corresponde ao orçamento aceite.",
+        )
+        staff_user = User.objects.create_superuser(
+            "support@example.com",
+            "Support-Strong-Password-123!",
+        )
+        url = reverse("dispute-review", args=(dispute.pk,))
+
+        self.client.force_authenticate(self.provider_user)
+        denied = self.client.post(
+            url,
+            {"status": Dispute.Status.RESOLVED, "resolution": "Decisão."},
+        )
+        self.client.force_authenticate(staff_user)
+        missing_reason = self.client.post(
+            url,
+            {"status": Dispute.Status.RESOLVED},
+        )
+        resolved = self.client.post(
+            url,
+            {
+                "status": Dispute.Status.RESOLVED,
+                "resolution": "As mensagens confirmam que o âmbito acordado não foi cumprido.",
+            },
+        )
+
+        self.assertEqual(denied.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(missing_reason.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(resolved.status_code, status.HTTP_200_OK)
+        dispute.refresh_from_db()
+        self.assertEqual(dispute.status, Dispute.Status.RESOLVED)
+        self.assertEqual(dispute.reviewed_by, staff_user)
+        self.assertIsNotNone(dispute.resolved_at)

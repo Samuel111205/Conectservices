@@ -109,3 +109,104 @@ class PaymentAuditEvent(models.Model):
             f"Pagamento #{self.payment_id}: "
             f"{self.previous_status or '—'} → {self.new_status}"
         )
+
+
+class RefundRequest(models.Model):
+    class Status(models.TextChoices):
+        REQUESTED = "REQUESTED", "Solicitado"
+        APPROVED = "APPROVED", "Aprovado para devolução"
+        REJECTED = "REJECTED", "Rejeitado"
+        PAID = "PAID", "Confirmada pelo prestador"
+        CANCELLED = "CANCELLED", "Cancelado pelo cliente"
+
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.PROTECT,
+        related_name="refund_requests",
+    )
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="refund_requests",
+    )
+    amount = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        validators=(MinValueValidator(Decimal("0.01")),),
+    )
+    reason = models.TextField()
+    status = models.CharField(
+        max_length=12,
+        choices=Status.choices,
+        default=Status.REQUESTED,
+        db_index=True,
+    )
+    decision_note = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_refund_requests",
+    )
+    payout_reference = models.CharField(max_length=120, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        verbose_name = "pedido de reembolso"
+        verbose_name_plural = "pedidos de reembolso"
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(amount__gt=0),
+                name="refund_request_amount_positive",
+            ),
+            models.UniqueConstraint(
+                fields=("payment",),
+                condition=models.Q(status__in=("REQUESTED", "APPROVED")),
+                name="refund_one_active_per_payment",
+            ),
+        ]
+        indexes = [
+            models.Index(
+                fields=("status", "-created_at"),
+                name="refund_status_date_idx",
+            ),
+        ]
+
+    def __str__(self):
+        return f"Reembolso #{self.pk} — pagamento #{self.payment_id}"
+
+
+class RefundAuditEvent(models.Model):
+    refund_request = models.ForeignKey(
+        RefundRequest,
+        on_delete=models.PROTECT,
+        related_name="audit_events",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="refund_audit_events",
+    )
+    previous_status = models.CharField(max_length=12, blank=True)
+    new_status = models.CharField(max_length=12, choices=RefundRequest.Status.choices)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        verbose_name = "evento de auditoria de reembolso"
+        verbose_name_plural = "eventos de auditoria de reembolso"
+
+    def __str__(self):
+        return (
+            f"Reembolso #{self.refund_request_id}: "
+            f"{self.previous_status or '—'} → {self.new_status}"
+        )

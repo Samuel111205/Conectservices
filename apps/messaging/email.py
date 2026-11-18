@@ -16,7 +16,13 @@ def enviar_email_notificacao(*, notification_id):
     with transaction.atomic():
         notificacao = (
             Notification.objects.select_for_update()
-            .select_related("recipient", "actor", "product_order__provider")
+            .select_related(
+                "recipient",
+                "actor",
+                "product_order__provider",
+                "dispute",
+                "refund_request",
+            )
             .filter(pk=notification_id)
             .first()
         )
@@ -53,7 +59,7 @@ def enviar_email_notificacao(*, notification_id):
             destination = "empresa/encomendas"
         else:
             destination = "compras"
-    else:
+    elif notificacao.kind == Notification.Kind.MESSAGE:
         if not actor_name:
             actor_name = "Um participante da conversa"
         body = (
@@ -61,6 +67,11 @@ def enviar_email_notificacao(*, notification_id):
             f"{notificacao.body}\n"
         )
         destination = "mensagens"
+    else:
+        if not actor_name:
+            actor_name = "A equipa Conect Services"
+        body = f"{actor_name}: {notificacao.body}\n"
+        destination = "casos"
     if settings.WEB_APP_URL:
         body += f"\nAcede à tua conta: {settings.WEB_APP_URL}/{destination}\n"
 

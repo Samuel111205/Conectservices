@@ -10,6 +10,7 @@ Mobile através da mesma API.
 - [Guia da API](docs/api.md)
 - [Referência dos endpoints da API](docs/api-reference.md)
 - [Exemplos de utilização da API](docs/api-examples.md)
+- [Política proposta de cancelamentos, reembolsos e disputas](docs/cancelamentos-reembolsos-disputas.md)
 - Schema OpenAPI: `/api/v1/schema/` e interface interactiva
   `/api/v1/docs/` (em produção, disponíveis apenas para administradores).
 

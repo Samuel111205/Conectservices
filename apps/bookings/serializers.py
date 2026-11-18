@@ -41,6 +41,9 @@ class BookingSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "completed_at",
+            "cancellation_reason",
+            "cancelled_by",
+            "cancelled_at",
             "review",
         )
         read_only_fields = fields
@@ -69,3 +72,15 @@ class BookingSerializer(serializers.ModelSerializer):
             "comment": review.comment,
             "created_at": review.created_at,
         }
+
+
+class CancelBookingSerializer(serializers.Serializer):
+    reason = serializers.CharField(max_length=1000, required=False, allow_blank=True)
+
+    def validate(self, attributes):
+        fornecido = set(self.initial_data).difference({"reason"})
+        if fornecido:
+            raise serializers.ValidationError(
+                {campo: "Campo não permitido." for campo in fornecido}
+            )
+        return attributes

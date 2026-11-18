@@ -5,7 +5,7 @@ import Image from "@/lib/image";
 import Link from "@/lib/link";
 import { usePathname, useRouter } from "@/lib/navigation";
 import { useEffect, useState } from "react";
-import { ArrowUpRight, Bell, BriefcaseBusiness, ClipboardList, Compass, Heart, Home, LogOut, MessageCircle, Package, Plus, Settings, UserRound, } from "lucide-react";
+import { ArrowUpRight, Bell, BriefcaseBusiness, ClipboardList, Compass, Heart, Home, LogOut, MessageCircle, Package, Plus, Settings, ShieldCheck, UserRound, } from "lucide-react";
 import { readActiveArea, rememberActiveArea } from "@/lib/active-area";
 import NotificationCenter from "./notification-center";
 import styles from "./auth.module.css";
@@ -29,6 +29,7 @@ const navigationPorArea = {
         { href: "/perfil", label: "Perfil", icon: UserRound },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
         { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
+        { href: "/casos", label: "Disputas e reembolsos", icon: ShieldCheck },
     ],
     provider: [
         { href: "/prestador", label: "Dashboard", icon: Home },
@@ -39,6 +40,7 @@ const navigationPorArea = {
         { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
         { href: "/perfil", label: "Perfil profissional", icon: UserRound },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
+        { href: "/casos", label: "Disputas e reembolsos", icon: ShieldCheck },
     ],
     company: [
         { href: "/empresa", label: "Dashboard", icon: Home },
@@ -50,6 +52,7 @@ const navigationPorArea = {
         { href: "#notifications", label: "Notificações", icon: Bell },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
         { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
+        { href: "/casos", label: "Disputas e reembolsos", icon: ShieldCheck },
     ],
 };
 const labelsMovel = {
@@ -61,6 +64,7 @@ const labelsMovel = {
     "Perfil profissional": "Perfil",
     "Perfil da empresa": "Empresa",
     "Pedidos recebidos": "Encomendas",
+    "Disputas e reembolsos": "Apoio",
 };
 export default function EstruturaAutenticacao({ children, account = false, profileName, area, }) {
     const router = useRouter();
@@ -68,7 +72,7 @@ export default function EstruturaAutenticacao({ children, account = false, profi
     const paginaLogin = pathname === "/entrar";
     const areaAtual = area ?? (pathname.startsWith("/empresa") ? "company"
         : pathname.startsWith("/prestador") ? "provider"
-            : pathname === "/contratacoes" || pathname === "/mensagens"
+            : pathname === "/contratacoes" || pathname === "/mensagens" || pathname === "/casos"
                 ? readActiveArea() ?? "client"
                 : "client");
     const providerArea = areaAtual === "provider" || areaAtual === "company";
@@ -204,10 +208,10 @@ export default function EstruturaAutenticacao({ children, account = false, profi
     }
     const nav = (mobile = false) => (_jsx("nav", { className: mobile ? styles.mobileNav : styles.workspaceNav, "aria-label": mobile ? "Navegação móvel" : "Navegação da área pessoal", children: (mobile
             ? areaAtual === "client"
-                ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[8], itemsDaArea[4], itemsDaArea[6]]
+                ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[8], itemsDaArea[4], itemsDaArea[9]]
                 : areaAtual === "provider"
-                    ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[2], itemsDaArea[5], itemsDaArea[3], itemsDaArea[6]]
-                    : [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[4], itemsDaArea[5], itemsDaArea[8]]
+                    ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[2], itemsDaArea[5], itemsDaArea[3], itemsDaArea[8]]
+                    : [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[4], itemsDaArea[5], itemsDaArea[9]]
             : itemsDaArea).map((item) => {
             const hrefPath = item.href.split("#")[0];
             const ativo = item.href.includes("#")

@@ -1,7 +1,8 @@
 from datetime import date, timedelta
 from io import BytesIO
-from tempfile import TemporaryDirectory
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import override_settings
@@ -28,8 +29,9 @@ def criar_imagem_carregada(*, image_format="PNG", name="profile.png", color="red
 
 class ProfileApiTests(APITestCase):
     def setUp(self):
-        self.media_directory = TemporaryDirectory()
-        self.media_override = override_settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_directory = Path(settings.BASE_DIR) / ".test-media"
+        self.media_directory.mkdir(exist_ok=True)
+        self.media_override = override_settings(MEDIA_ROOT=str(self.media_directory))
         self.media_override.enable()
         self.user = User.objects.create_user(
             "client@example.com",
@@ -45,7 +47,6 @@ class ProfileApiTests(APITestCase):
             if perfil.photo:
                 perfil.photo.delete(save=False)
         self.media_override.disable()
-        self.media_directory.cleanup()
 
     def test__perfil_creation_exige_authentication(self):
         resposta = self.client.post(

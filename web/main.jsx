@@ -7,6 +7,7 @@ import "./app/globals.css";
 const PaginaInicial = lazy(() => import("./app/home-gate"));
 const Administracao = lazy(() => import("./app/admin/page"));
 const Categorias = lazy(() => import("./app/categorias/page"));
+const Casos = lazy(() => import("./app/casos/page"));
 const ConfirmarEmail = lazy(() => import("./app/confirmar-email/page"));
 const Conta = lazy(() => import("./app/conta/page"));
 const Contratacoes = lazy(() => import("./app/contratacoes/page"));
@@ -61,6 +62,7 @@ function Aplicacao() {
           <Route path="/" element={<PaginaInicial />} />
           <Route path="/admin" element={<Administracao />} />
           <Route path="/categorias" element={<Categorias />} />
+          <Route path="/casos" element={<Casos />} />
           <Route path="/confirmar-email" element={<ConfirmarEmail />} />
           <Route path="/empreendedores" element={<Diretorio audience="entrepreneurs" />} />
           <Route path="/empresas" element={<Diretorio audience="companies" />} />

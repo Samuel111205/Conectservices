@@ -41,6 +41,28 @@ def criar_notificacao_encomenda(*, encomenda, recipient, actor, title, body):
     return notificacao
 
 
+def criar_notificacao_de_caso(
+    *, recipient, actor, title, body, dispute=None, refund_request=None
+):
+    if (dispute is None) == (refund_request is None):
+        raise ValueError("A notificação deve apontar para exactamente um caso.")
+    if recipient is None:
+        return None
+    if recipient.pk == getattr(actor, "pk", None):
+        return None
+    notificacao = Notification.objects.create(
+        recipient=recipient,
+        actor=actor,
+        dispute=dispute,
+        refund_request=refund_request,
+        kind=(Notification.Kind.DISPUTE if dispute is not None else Notification.Kind.REFUND),
+        title=title[:120],
+        body=body[:500],
+    )
+    _agendar_entrega_notificacao(notificacao)
+    return notificacao
+
+
 def _e_participante(proposal, user):
     return (
         proposal.order.client_id == user.pk
@@ -173,11 +195,20 @@ def enviar_push_notification(*, notification_id):
             "notificationId": notificacao.pk,
             "productOrderId": notificacao.product_order_id,
         }
-    else:
+    elif notificacao.kind == Notification.Kind.MESSAGE:
         body = "Tens uma nova mensagem sobre um serviço."
         data = {
             "notificationId": notificacao.pk,
             "conversationId": notificacao.conversation_id,
+        }
+    elif notificacao.kind == Notification.Kind.DISPUTE:
+        body = notificacao.body
+        data = {"notificationId": notificacao.pk, "disputeId": notificacao.dispute_id}
+    else:
+        body = notificacao.body
+        data = {
+            "notificationId": notificacao.pk,
+            "refundRequestId": notificacao.refund_request_id,
         }
     messages = [
         {

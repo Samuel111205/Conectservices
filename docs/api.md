@@ -77,6 +77,8 @@ schema OpenAPI para confirmar o contrato exacto.
 | `/favorites/providers/`, `/favorites/services/` | Favoritos do utilizador autenticado. |
 | `/conversations/`, `/notifications/`, `/push-tokens/` | Mensagens, notificações e registo de dispositivos push. |
 | `/payments/` | Registos e operações de pagamento suportadas. |
+| `/refund-requests/` | Pedidos, análise e confirmação manual de reembolsos. |
+| `/disputes/` | Disputas e mensagens entre participantes e equipa de apoio. |
 | `/dashboard/` | Painel do utilizador autenticado. |
 | `/dashboard/analytics/` | Análise do desempenho do profissional autenticado. |
 | `/dashboard/admin/` | Indicadores administrativos; requer privilégios de administrador. |

@@ -97,6 +97,8 @@ class NotificationSerializer(serializers.ModelSerializer):
     actor_id = serializers.IntegerField(read_only=True, allow_null=True)
     conversation_id = serializers.IntegerField(read_only=True, allow_null=True)
     product_order_id = serializers.IntegerField(read_only=True, allow_null=True)
+    dispute_id = serializers.IntegerField(read_only=True, allow_null=True)
+    refund_request_id = serializers.IntegerField(read_only=True, allow_null=True)
     href = serializers.SerializerMethodField()
 
     class Meta:
@@ -109,6 +111,8 @@ class NotificationSerializer(serializers.ModelSerializer):
             "actor_id",
             "conversation_id",
             "product_order_id",
+            "dispute_id",
+            "refund_request_id",
             "href",
             "created_at",
             "read_at",
@@ -127,6 +131,10 @@ class NotificationSerializer(serializers.ModelSerializer):
             return f"/compras?encomenda={notification.product_order_id}"
         if notification.conversation_id is not None:
             return f"/mensagens?conversa={notification.conversation_id}"
+        if notification.dispute_id is not None:
+            return f"/casos?disputa={notification.dispute_id}"
+        if notification.refund_request_id is not None:
+            return f"/casos?reembolso={notification.refund_request_id}"
         return None
 
 

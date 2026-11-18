@@ -15,7 +15,7 @@ from apps.availability.services import (
     agendar_contratacao,
 )
 from .models import Booking
-from .serializers import BookingSerializer
+from .serializers import BookingSerializer, CancelBookingSerializer
 from .services import (
     cancelar_contratacao,
     concluir_contratacao,
@@ -137,8 +137,14 @@ class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         contratacao = concluir_contratacao(booking_id=pk, actor=request.user)
         return Response(self.get_serializer(contratacao).data)
 
-    @extend_schema(request=None, responses=BookingSerializer)
+    @extend_schema(request=CancelBookingSerializer, responses=BookingSerializer)
     @action(detail=True, methods=("post",))
     def cancel(self, request, pk=None):
-        contratacao = cancelar_contratacao(booking_id=pk, actor=request.user)
+        serializador = CancelBookingSerializer(data=request.data)
+        serializador.is_valid(raise_exception=True)
+        contratacao = cancelar_contratacao(
+            booking_id=pk,
+            actor=request.user,
+            reason=serializador.validated_data.get("reason", ""),
+        )
         return Response(self.get_serializer(contratacao).data)

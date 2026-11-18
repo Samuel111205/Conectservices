@@ -1,5 +1,6 @@
-import { Stack } from "expo-router";
+import { Stack, useRouter, type Href } from "expo-router";
 import * as Notifications from "expo-notifications";
+import { useEffect } from "react";
 
 import { SessionProvider } from "@/providers/SessionProvider";
 
@@ -15,6 +16,7 @@ Notifications.setNotificationHandler({
 export default function RootLayout() {
   return (
     <SessionProvider>
+      <NotificationRouteHandler />
       <Stack screenOptions={{ headerTintColor: "#123B72" }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="entrar" options={{ title: "Entrar" }} />
@@ -28,4 +30,28 @@ export default function RootLayout() {
       </Stack>
     </SessionProvider>
   );
+}
+
+function NotificationRouteHandler() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const listener = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data ?? {};
+      if (typeof data.disputeId === "number" || typeof data.refundRequestId === "number") {
+        router.push({
+          pathname: "/(tabs)/casos",
+          params: {
+            ...(typeof data.disputeId === "number" ? { disputa: String(data.disputeId) } : {}),
+            ...(typeof data.refundRequestId === "number" ? { reembolso: String(data.refundRequestId) } : {}),
+          },
+        } as unknown as Href);
+      } else if (typeof data.conversationId === "number") {
+        router.push("/(tabs)/conta");
+      }
+    });
+    return () => listener.remove();
+  }, [router]);
+
+  return null;
 }

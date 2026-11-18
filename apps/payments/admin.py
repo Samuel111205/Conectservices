@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from rest_framework.exceptions import APIException
 
-from .models import Payment, PaymentAuditEvent
+from .models import Payment, PaymentAuditEvent, RefundAuditEvent, RefundRequest
 from .services import avaliar_pagamento
 
 
@@ -80,6 +80,67 @@ class PaymentAuditEventAdmin(admin.ModelAdmin):
         "actor",
         "previous_status",
         "new_status",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(RefundRequest)
+class RefundRequestAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "payment",
+        "amount",
+        "status",
+        "requested_by",
+        "created_at",
+        "refunded_at",
+    )
+    list_filter = ("status", "created_at", "reviewed_at")
+    search_fields = ("payment__booking__id", "requested_by__email", "payout_reference")
+    readonly_fields = (
+        "payment",
+        "requested_by",
+        "amount",
+        "reason",
+        "status",
+        "decision_note",
+        "reviewed_by",
+        "payout_reference",
+        "created_at",
+        "updated_at",
+        "reviewed_at",
+        "refunded_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(RefundAuditEvent)
+class RefundAuditEventAdmin(admin.ModelAdmin):
+    list_display = (
+        "refund_request",
+        "previous_status",
+        "new_status",
+        "actor",
+        "created_at",
+    )
+    list_filter = ("new_status", "created_at")
+    readonly_fields = (
+        "refund_request",
+        "actor",
+        "previous_status",
+        "new_status",
+        "note",
         "created_at",
     )
 

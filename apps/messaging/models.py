@@ -57,6 +57,8 @@ class Notification(models.Model):
     class Kind(models.TextChoices):
         MESSAGE = "MESSAGE", "Nova mensagem"
         PRODUCT_ORDER = "PRODUCT_ORDER", "Atualização de encomenda"
+        DISPUTE = "DISPUTE", "Atualização de disputa"
+        REFUND = "REFUND", "Atualização de reembolso"
 
     class EmailStatus(models.TextChoices):
         PENDING = "PENDING", "Pendente"
@@ -92,6 +94,20 @@ class Notification(models.Model):
     )
     product_order = models.ForeignKey(
         ProductOrder,
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    dispute = models.ForeignKey(
+        "bookings.Dispute",
+        on_delete=models.CASCADE,
+        related_name="notifications",
+        null=True,
+        blank=True,
+    )
+    refund_request = models.ForeignKey(
+        "payments.RefundRequest",
         on_delete=models.CASCADE,
         related_name="notifications",
         null=True,
@@ -133,12 +149,32 @@ class Notification(models.Model):
                         conversation__isnull=False,
                         message__isnull=False,
                         product_order__isnull=True,
+                        dispute__isnull=True,
+                        refund_request__isnull=True,
                     )
                     | models.Q(
                         kind="PRODUCT_ORDER",
                         conversation__isnull=True,
                         message__isnull=True,
                         product_order__isnull=False,
+                        dispute__isnull=True,
+                        refund_request__isnull=True,
+                    )
+                    | models.Q(
+                        kind="DISPUTE",
+                        conversation__isnull=True,
+                        message__isnull=True,
+                        product_order__isnull=True,
+                        dispute__isnull=False,
+                        refund_request__isnull=True,
+                    )
+                    | models.Q(
+                        kind="REFUND",
+                        conversation__isnull=True,
+                        message__isnull=True,
+                        product_order__isnull=True,
+                        dispute__isnull=True,
+                        refund_request__isnull=False,
                     )
                 ),
                 name="notification_target_matches_kind",

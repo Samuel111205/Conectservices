@@ -49,7 +49,7 @@ Todos os caminhos incluem `/api/v1`. Parâmetros `path` fazem parte do URL; `que
 | `GET` | `/api/v1/bookings/` | JWT ou sessão | `page` (query: integer) | - | `200` PaginatedBookingList |
 | `GET` | `/api/v1/bookings/{id}/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Booking |
 | `GET` | `/api/v1/bookings/{id}/available-slots/` | JWT ou sessão | `date` (query, obrigatório: string/date), `id` (path, obrigatório: integer) | - | `200` AvailableSlotsResponse |
-| `POST` | `/api/v1/bookings/{id}/cancel/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Booking |
+| `POST` | `/api/v1/bookings/{id}/cancel/` | JWT ou sessão | `id` (path, obrigatório: integer) | `CancelBooking` (opcional: `reason`) | `200` Booking |
 | `POST` | `/api/v1/bookings/{id}/complete/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Booking |
 | `POST` | `/api/v1/bookings/{id}/confirm/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Booking |
 | `POST` | `/api/v1/bookings/{id}/schedule/` | JWT ou sessão | `id` (path, obrigatório: integer) | `ScheduleBooking` | `200` Booking |
@@ -64,6 +64,19 @@ Todos os caminhos incluem `/api/v1`. Parâmetros `path` fazem parte do URL; `que
 | `GET` | `/api/v1/conversations/{id}/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Conversation |
 | `GET` | `/api/v1/conversations/{id}/messages/` | JWT ou sessão | `id` (path, obrigatório: integer), `page` (query: integer) | - | `200` PaginatedMessageList |
 | `POST` | `/api/v1/conversations/{id}/messages/` | JWT ou sessão | `id` (path, obrigatório: integer) | `Message` | `201` Message |
+
+## Disputas
+
+Só o cliente e o prestador da contratação (ou a equipa de apoio) podem consultar a disputa e as mensagens. Cada contratação pode ter uma disputa aberta de cada vez. As mensagens são texto; anexos ainda não são suportados.
+
+| Método | Caminho | Acesso | Parâmetros | Pedido | Respostas de sucesso |
+|---|---|---|---|---|---|
+| `GET` | `/api/v1/disputes/` | JWT ou sessão | `page` (query: integer) | - | `200` PaginatedDisputeList |
+| `POST` | `/api/v1/disputes/` | JWT ou sessão, participante | - | `DisputeCreate` (`booking_id`, `category`, `description`) | `201` Dispute |
+| `GET` | `/api/v1/disputes/{id}/` | JWT ou sessão, participante ou equipa de apoio | `id` (path, obrigatório: integer) | - | `200` Dispute |
+| `GET` | `/api/v1/disputes/{id}/messages/` | JWT ou sessão, participante ou equipa de apoio | `id` (path, obrigatório: integer), `page` (query: integer) | - | `200` PaginatedDisputeMessageList |
+| `POST` | `/api/v1/disputes/{id}/messages/` | JWT ou sessão, participante ou equipa de apoio | `id` (path, obrigatório: integer) | `DisputeMessageCreate` (`body`) | `201` DisputeMessage |
+| `POST` | `/api/v1/disputes/{id}/review/` | Equipa de apoio | `id` (path, obrigatório: integer) | `DisputeReview` (`status`, `resolution` opcional) | `200` Dispute |
 
 ## Disponibilidade
 
@@ -114,7 +127,7 @@ Todos os caminhos incluem `/api/v1`. Parâmetros `path` fazem parte do URL; `que
 
 | Método | Caminho | Acesso | Parâmetros | Pedido | Respostas de sucesso |
 |---|---|---|---|---|---|
-| `GET` | `/api/v1/notifications/` | JWT ou sessão | `page` (query: integer) | - | `200` PaginatedNotificationList |
+| `GET` | `/api/v1/notifications/` | JWT ou sessão | `page` (query: integer) | - | `200` PaginatedNotificationList (`dispute_id`, `refund_request_id`, `href`) |
 | `POST` | `/api/v1/notifications/read_all/` | JWT ou sessão | - | - | `200` MarkNotificationsRead |
 | `GET` | `/api/v1/notifications/unread_count/` | JWT ou sessão | - | - | `200` UnreadNotificationCount |
 | `POST` | `/api/v1/notifications/{id}/read/` | JWT ou sessão | `id` (path, obrigatório: integer) | - | `200` Notification |
@@ -125,6 +138,19 @@ Todos os caminhos incluem `/api/v1`. Parâmetros `path` fazem parte do URL; `que
 |---|---|---|---|---|---|
 | `GET` | `/api/v1/payments/` | JWT ou sessão | `page` (query: integer) | - | `200` PaginatedPaymentList |
 | `POST` | `/api/v1/payments/` | JWT ou sessão | - | `Payment` | `201` Payment |
+
+## Reembolsos
+
+O pedido só pode ser criado pelo cliente da contratação e exige um pagamento confirmado. Só pode haver um pedido pendente por pagamento, e o total não pode exceder o valor pago. A aprovação não movimenta dinheiro: o prestador regista a referência depois de efectuar a devolução fora da plataforma. O estado `PAID` é uma confirmação declarada pelo prestador, não uma verificação independente.
+
+| Método | Caminho | Acesso | Parâmetros | Pedido | Respostas de sucesso |
+|---|---|---|---|---|---|
+| `GET` | `/api/v1/refund-requests/` | JWT ou sessão, participante ou equipa de apoio | `page` (query: integer) | - | `200` PaginatedRefundRequestList |
+| `POST` | `/api/v1/refund-requests/` | JWT ou sessão, cliente | - | `RefundRequestCreate` (`booking_id`, `amount`, `reason`) | `201` RefundRequest |
+| `GET` | `/api/v1/refund-requests/{id}/` | JWT ou sessão, participante ou equipa de apoio | `id` (path, obrigatório: integer) | - | `200` RefundRequest |
+| `POST` | `/api/v1/refund-requests/{id}/cancel/` | JWT ou sessão, cliente que abriu o pedido | `id` (path, obrigatório: integer) | - | `200` RefundRequest |
+| `POST` | `/api/v1/refund-requests/{id}/review/` | Equipa de apoio | `id` (path, obrigatório: integer) | `RefundReview` (`status`, `decision_note` opcional) | `200` RefundRequest |
+| `POST` | `/api/v1/refund-requests/{id}/confirm-paid/` | JWT ou sessão, prestador da contratação | `id` (path, obrigatório: integer) | `RefundPaid` (`payout_reference`) | `200` RefundRequest |
 
 ## Painéis
 

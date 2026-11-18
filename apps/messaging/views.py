@@ -149,7 +149,13 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             return Notification.objects.none()
         return Notification.objects.filter(
             recipient=self.request.user,
-        ).select_related("conversation", "actor", "product_order__provider")
+        ).select_related(
+            "conversation",
+            "actor",
+            "product_order__provider",
+            "dispute",
+            "refund_request",
+        )
 
     @extend_schema(responses=UnreadNotificationCountSerializer)
     @action(detail=False, methods=("get",))

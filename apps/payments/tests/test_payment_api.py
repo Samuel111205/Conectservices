@@ -8,11 +8,16 @@ from rest_framework.test import APITestCase
 from apps.bookings.models import Booking
 from apps.catalog.models import Category
 from apps.locations.models import Municipality, Province
+from apps.messaging.models import Notification
 from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
-from apps.payments.models import Payment
-from apps.payments.models import PaymentAuditEvent
+from apps.payments.models import (
+    Payment,
+    PaymentAuditEvent,
+    RefundAuditEvent,
+    RefundRequest,
+)
 from apps.payments.services import avaliar_pagamento
 
 User = get_user_model()
@@ -206,3 +211,121 @@ class PaymentApiTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertFalse(Payment.objects.exists())
+
+    def test__reembolso_exige_pagamento_confirmado_and_cliente_pagador(self):
+        url = reverse("refund-request-list")
+        payload = {
+            "booking_id": self.booking.pk,
+            "amount": "5000.00",
+            "reason": "O serviço foi parcialmente interrompido.",
+        }
+        self.client.force_authenticate(self.client_user)
+        without_payment = self.client.post(url, payload)
+
+        pagamento = Payment.objects.create(
+            booking=self.booking,
+            amount=self.booking.final_price,
+            currency=self.booking.currency,
+            method=Payment.Method.BANK_TRANSFER,
+            status=Payment.Status.CONFIRMED,
+            reviewed_by=self.admin_user,
+        )
+        self.client.force_authenticate(self.provider_user)
+        provider_request = self.client.post(url, payload)
+        self.client.force_authenticate(self.outsider)
+        outsider_list = self.client.get(url)
+        self.client.force_authenticate(self.client_user)
+        created = self.client.post(url, payload)
+
+        self.assertEqual(without_payment.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(provider_request.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertEqual(outsider_list.data["count"], 0)
+        self.assertEqual(created.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(created.data["payment_id"], pagamento.pk)
+        self.assertEqual(created.data["amount"], "5000.00")
+        self.assertTrue(
+            Notification.objects.filter(
+                kind=Notification.Kind.REFUND,
+                recipient=self.provider_user,
+                refund_request_id=created.data["id"],
+            ).exists()
+        )
+
+    def test__limita_valor_pedido_and_um_pendente_e_audita_devolucao_manual(self):
+        pagamento = Payment.objects.create(
+            booking=self.booking,
+            amount=self.booking.final_price,
+            currency=self.booking.currency,
+            method=Payment.Method.BANK_TRANSFER,
+            status=Payment.Status.CONFIRMED,
+            reviewed_by=self.admin_user,
+        )
+        url = reverse("refund-request-list")
+        self.client.force_authenticate(self.client_user)
+        excessive = self.client.post(
+            url,
+            {
+                "booking_id": self.booking.pk,
+                "amount": "18000.01",
+                "reason": "Pedido acima do total pago.",
+            },
+        )
+        first = self.client.post(
+            url,
+            {
+                "booking_id": self.booking.pk,
+                "amount": "5000.00",
+                "reason": "Serviço parcialmente interrompido.",
+            },
+        )
+        second_pending = self.client.post(
+            url,
+            {
+                "booking_id": self.booking.pk,
+                "amount": "1000.00",
+                "reason": "Outro pedido enquanto o primeiro está pendente.",
+            },
+        )
+
+        self.assertEqual(excessive.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(first.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(second_pending.status_code, status.HTTP_400_BAD_REQUEST)
+        pedido = RefundRequest.objects.get(payment=pagamento)
+        self.assertTrue(
+            RefundAuditEvent.objects.filter(
+                refund_request=pedido,
+                new_status=RefundRequest.Status.REQUESTED,
+            ).exists()
+        )
+
+        self.client.force_authenticate(self.admin_user)
+        reviewed = self.client.post(
+            reverse("refund-request-review", args=(pedido.pk,)),
+            {
+                "status": RefundRequest.Status.APPROVED,
+                "decision_note": "Devolução parcial aprovada.",
+            },
+        )
+        self.client.force_authenticate(self.provider_user)
+        confirmed = self.client.post(
+            reverse("refund-request-confirm-paid", args=(pedido.pk,)),
+            {"payout_reference": "TRF-2026-0009"},
+        )
+
+        self.assertEqual(reviewed.status_code, status.HTTP_200_OK)
+        self.assertEqual(confirmed.status_code, status.HTTP_200_OK)
+        self.assertEqual(confirmed.data["status"], RefundRequest.Status.PAID)
+        self.assertEqual(confirmed.data["payout_reference"], "TRF-2026-0009")
+        pedido.refresh_from_db()
+        self.assertIsNotNone(pedido.refunded_at)
+        self.assertEqual(
+            RefundAuditEvent.objects.filter(refund_request=pedido).count(),
+            3,
+        )
+        self.assertEqual(
+            Notification.objects.filter(
+                kind=Notification.Kind.REFUND,
+                refund_request=pedido,
+            ).count(),
+            3,
+        )

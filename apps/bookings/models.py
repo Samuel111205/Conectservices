@@ -66,6 +66,15 @@ class Booking(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    cancellation_reason = models.TextField(blank=True)
+    cancelled_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cancelled_bookings",
+    )
+    cancelled_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ("-created_at", "-id")
@@ -97,3 +106,120 @@ class Booking(models.Model):
 
     def __str__(self):
         return f"Contratação #{self.pk} — {self.order}"
+
+
+class Dispute(models.Model):
+    class Category(models.TextChoices):
+        SERVICE_NOT_DELIVERED = "SERVICE_NOT_DELIVERED", "Serviço não prestado"
+        LATE_OR_NO_SHOW = "LATE_OR_NO_SHOW", "Atraso ou falta de comparência"
+        QUALITY = "QUALITY", "Qualidade do serviço"
+        SCOPE_OR_PRICE = "SCOPE_OR_PRICE", "Âmbito ou preço"
+        INTERRUPTION = "INTERRUPTION", "Interrupção do serviço"
+        REFUND = "REFUND", "Reembolso"
+        OTHER = "OTHER", "Outro"
+
+    class Status(models.TextChoices):
+        OPEN = "OPEN", "Aberta"
+        UNDER_REVIEW = "UNDER_REVIEW", "Em análise"
+        RESOLVED = "RESOLVED", "Resolvida"
+        CLOSED = "CLOSED", "Fechada"
+
+    booking = models.ForeignKey(
+        Booking,
+        on_delete=models.PROTECT,
+        related_name="disputes",
+    )
+    opened_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="opened_disputes",
+    )
+    category = models.CharField(max_length=24, choices=Category.choices)
+    description = models.TextField()
+    status = models.CharField(
+        max_length=16,
+        choices=Status.choices,
+        default=Status.OPEN,
+        db_index=True,
+    )
+    resolution = models.TextField(blank=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="reviewed_disputes",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    resolved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        verbose_name = "disputa"
+        verbose_name_plural = "disputas"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("booking",),
+                condition=models.Q(status__in=("OPEN", "UNDER_REVIEW")),
+                name="dispute_one_active_per_booking",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=("status", "-created_at"), name="dispute_status_date_idx"),
+        ]
+
+    def __str__(self):
+        return f"Disputa #{self.pk} — contratação #{self.booking_id}"
+
+
+class DisputeMessage(models.Model):
+    dispute = models.ForeignKey(
+        Dispute,
+        on_delete=models.PROTECT,
+        related_name="messages",
+    )
+    author = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        related_name="dispute_messages",
+    )
+    body = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at", "pk")
+        verbose_name = "mensagem de disputa"
+        verbose_name_plural = "mensagens de disputa"
+
+    def __str__(self):
+        return f"Mensagem #{self.pk} — disputa #{self.dispute_id}"
+
+
+class DisputeStatusEvent(models.Model):
+    dispute = models.ForeignKey(
+        Dispute,
+        on_delete=models.PROTECT,
+        related_name="status_events",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="dispute_status_events",
+    )
+    previous_status = models.CharField(max_length=16, blank=True)
+    new_status = models.CharField(max_length=16, choices=Dispute.Status.choices)
+    note = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ("created_at", "pk")
+        verbose_name = "evento de estado de disputa"
+        verbose_name_plural = "eventos de estado de disputa"
+
+    def __str__(self):
+        return f"Disputa #{self.dispute_id}: {self.previous_status or '—'} → {self.new_status}"
