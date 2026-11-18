@@ -30,6 +30,7 @@ const RedefinirPalavraPasse = lazy(() => import("./app/redefinir-palavra-passe/p
 const Registar = lazy(() => import("./app/registar/page"));
 const PrestadorDetalhe = lazy(() => import("./app/prestadores/[providerId]/page"));
 const ServicoDetalhe = lazy(() => import("./app/servicos/[serviceId]/page"));
+const Diretorio = lazy(() => import("./app/directory-page"));
 
 function RestaurarScroll() {
   const location = useLocation();
@@ -61,6 +62,8 @@ function Aplicacao() {
           <Route path="/admin" element={<Administracao />} />
           <Route path="/categorias" element={<Categorias />} />
           <Route path="/confirmar-email" element={<ConfirmarEmail />} />
+          <Route path="/empreendedores" element={<Diretorio audience="entrepreneurs" />} />
+          <Route path="/empresas" element={<Diretorio audience="companies" />} />
           <Route path="/conta" element={<Conta />} />
           <Route path="/contratacoes" element={<Contratacoes />} />
           <Route path="/empresa" element={<Empresa />} />
@@ -76,6 +79,7 @@ function Aplicacao() {
           <Route path="/prestador" element={<Prestador />} />
           <Route path="/prestador/pedidos" element={<PedidosPrestador />} />
           <Route path="/prestador/servicos" element={<ServicosPrestador />} />
+          <Route path="/prestadores" element={<Diretorio audience="providers" />} />
           <Route path="/produtos" element={<Produtos />} />
           <Route path="/compras" element={<Compras />} />
           <Route path="/recuperar-acesso" element={<RecuperarAcesso />} />

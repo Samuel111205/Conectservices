@@ -19,10 +19,13 @@ from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView
+from rest_framework.permissions import IsAdminUser
 
 admin.site.site_header = "Conect Services"
 admin.site.site_title = "Administração Conect Services"
 admin.site.index_title = "Gestão da plataforma"
+
+permissoes_documentacao = () if settings.DEBUG else (IsAdminUser,)
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -43,10 +46,17 @@ urlpatterns = [
     path("api/v1/reviews/", include("apps.reviews.urls")),
     path("api/v1/payments/", include("apps.payments.urls")),
     path("api/v1/dashboard/", include("apps.dashboard.urls")),
-    path("api/v1/schema/", SpectacularAPIView.as_view(), name="api-schema"),
+    path(
+        "api/v1/schema/",
+        SpectacularAPIView.as_view(permission_classes=permissoes_documentacao),
+        name="api-schema",
+    ),
     path(
         "api/v1/docs/",
-        SpectacularSwaggerView.as_view(url_name="api-schema"),
+        SpectacularSwaggerView.as_view(
+            url_name="api-schema",
+            permission_classes=permissoes_documentacao,
+        ),
         name="api-docs",
     ),
 ]

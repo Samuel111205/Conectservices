@@ -1,15 +1,23 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
+from django.core.cache import cache
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
+from rest_framework.settings import api_settings
+from rest_framework.throttling import AnonRateThrottle
 from rest_framework.test import APITestCase
 
 from apps.bookings.models import Booking
 from apps.catalog.models import Category, Service
+from apps.businesses.models import BusinessProfile
+from apps.dashboard.models import ListingView
 from apps.locations.models import Municipality, Province, ProviderCoverage
 from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
+from apps.providers.views import ProviderDiscoveryView
 from apps.reviews.models import Review
 
 User = get_user_model()
@@ -94,7 +102,7 @@ class ProviderDiscoveryApiTests(APITestCase):
         )
         Review.objects.create(booking=contratacao, rating=rating)
 
-    def test__public_discovery_lists_apenas_verificado_active_prestadores_com_servicos(self):
+    def test__public_discovery_lists_todos_os_prestadores_verificados_ativos(self):
         pending_user = User.objects.create_user(
             "pending@example.com",
             "Strong-Password-789!",
@@ -118,10 +126,31 @@ class ProviderDiscoveryApiTests(APITestCase):
         resposta = self.client.get(self.url)
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
-        self.assertEqual(resposta.data["count"], 1)
-        self.assertEqual(resposta.data["results"][0]["id"], self.provider.pk)
+        self.assertEqual(resposta.data["count"], 2)
+        self.assertEqual(
+            {item["id"] for item in resposta.data["results"]},
+            {self.provider.pk, Provider.objects.get(user=no_service_user).pk},
+        )
         self.assertNotIn("business_email", resposta.data["results"][0])
         self.assertNotIn("user", resposta.data["results"][0])
+
+    def test__discovery_publica_tem_limite_global_de_requisicoes(self):
+        self.assertIn(AnonRateThrottle, api_settings.DEFAULT_THROTTLE_CLASSES)
+        self.assertEqual(api_settings.DEFAULT_THROTTLE_RATES["anon"], "60/minute")
+        cache.clear()
+
+        with (
+            patch.object(ProviderDiscoveryView, "throttle_classes", (AnonRateThrottle,)),
+            patch.object(AnonRateThrottle, "THROTTLE_RATES", {"anon": "1/minute"}),
+        ):
+            primeira_resposta = self.client.get(self.url)
+            segunda_resposta = self.client.get(self.url)
+
+        self.assertEqual(primeira_resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            segunda_resposta.status_code,
+            status.HTTP_429_TOO_MANY_REQUESTS,
+        )
 
     def test__search_categoria_municipio_and_ordering_filters(self):
         second_user = User.objects.create_user(
@@ -167,14 +196,90 @@ class ProviderDiscoveryApiTests(APITestCase):
         self.assertEqual(resposta.data["results"][0]["review_count"], 2)
         self.assertEqual(resposta.data["results"][0]["active_service_count"], 1)
 
-    def test__inactive_servico_and_coverage_do_nao_make_prestador_discoverable(self):
+    def test__discovery_separa_prestadores_empresas_and_empreendedores(self):
+        company_user = User.objects.create_user(
+            "company@example.com",
+            "Strong-Password-303!",
+        )
+        company_provider = Provider.objects.create(
+            user=company_user,
+            commercial_name="Empresa",
+            verification_status=Provider.VerificationStatus.VERIFIED,
+        )
+        BusinessProfile.objects.create(provider=company_provider)
+        self.create_service(company_provider, self.category, "Serviço empresarial")
+
+        entrepreneur_user = User.objects.create_user(
+            "entrepreneur@example.com",
+            "Strong-Password-404!",
+        )
+        entrepreneur_provider = Provider.objects.create(
+            user=entrepreneur_user,
+            commercial_name="Empreendedor",
+            verification_status=Provider.VerificationStatus.VERIFIED,
+        )
+        BusinessProfile.objects.create(
+            provider=entrepreneur_provider,
+            business_type=BusinessProfile.BusinessType.ENTREPRENEUR,
+        )
+        self.create_service(entrepreneur_provider, self.category, "Serviço individual")
+
+        providers = self.client.get(self.url, {"audience": "providers"})
+        companies = self.client.get(self.url, {"audience": "companies"})
+        entrepreneurs = self.client.get(self.url, {"audience": "entrepreneurs"})
+        invalid = self.client.get(self.url, {"audience": "unknown"})
+
+        self.assertEqual(
+            [item["id"] for item in providers.data["results"]],
+            [self.provider.pk],
+        )
+        self.assertEqual(
+            [item["id"] for item in companies.data["results"]],
+            [company_provider.pk],
+        )
+        self.assertEqual(
+            companies.data["results"][0]["business_profile"]["business_type"],
+            BusinessProfile.BusinessType.COMPANY,
+        )
+        self.assertEqual(
+            [item["id"] for item in entrepreneurs.data["results"]],
+            [entrepreneur_provider.pk],
+        )
+        self.assertEqual(invalid.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test__discovery_ordena_perfis_por_visualizacoes(self):
+        second_user = User.objects.create_user(
+            "popular@example.com",
+            "Strong-Password-505!",
+        )
+        popular_provider = Provider.objects.create(
+            user=second_user,
+            commercial_name="Muito visitado",
+            verification_status=Provider.VerificationStatus.VERIFIED,
+        )
+        for index in range(3):
+            ListingView.objects.create(
+                listing_type=ListingView.ListingType.PROVIDER,
+                listing_id=popular_provider.pk,
+                provider=popular_provider,
+                session_hash=f"{index:064}",
+            )
+
+        resposta = self.client.get(self.url, {"ordering": "-views"})
+
+        self.assertEqual(resposta.data["results"][0]["id"], popular_provider.pk)
+        self.assertEqual(resposta.data["results"][0]["view_count"], 3)
+        self.assertEqual(resposta.data["results"][1]["view_count"], 0)
+
+    def test__inactive_services_do_not_make_provider_invisible(self):
         self.provider.verification_status = Provider.VerificationStatus.VERIFIED
         self.provider.save(update_fields=("verification_status",))
         Service.objects.filter(provider=self.provider).update(is_active=False)
 
         resposta = self.client.get(self.url)
 
-        self.assertEqual(resposta.data["count"], 0)
+        self.assertEqual(resposta.data["count"], 1)
+        self.assertEqual(resposta.data["results"][0]["id"], self.provider.pk)
 
     def test__invalido_categoria_and_municipio_filters_estao_reported(self):
         category_response = self.client.get(self.url, {"category": "invalid"})

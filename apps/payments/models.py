@@ -78,3 +78,34 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Pagamento #{self.pk} — contratação #{self.booking_id}"
+
+
+class PaymentAuditEvent(models.Model):
+    """Immutable history of payment registration and administrative review."""
+
+    payment = models.ForeignKey(
+        Payment,
+        on_delete=models.PROTECT,
+        related_name="audit_events",
+    )
+    actor = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payment_audit_events",
+    )
+    previous_status = models.CharField(max_length=12, blank=True)
+    new_status = models.CharField(max_length=12, choices=Payment.Status.choices)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ("-created_at", "-pk")
+        verbose_name = "evento de auditoria de pagamento"
+        verbose_name_plural = "eventos de auditoria de pagamento"
+
+    def __str__(self):
+        return (
+            f"Pagamento #{self.payment_id}: "
+            f"{self.previous_status or '—'} → {self.new_status}"
+        )

@@ -1,4 +1,5 @@
 from django.core.exceptions import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 from rest_framework.exceptions import PermissionDenied
 
@@ -106,6 +107,12 @@ class ProductOrderItemSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
 
+class ProductOrderReviewSummarySerializer(serializers.Serializer):
+    rating = serializers.IntegerField()
+    comment = serializers.CharField(allow_blank=True)
+    created_at = serializers.DateTimeField()
+
+
 class ProductOrderSerializer(serializers.ModelSerializer):
     provider_name = serializers.CharField(source="provider.commercial_name", read_only=True)
     is_buyer = serializers.SerializerMethodField()
@@ -141,32 +148,39 @@ class ProductOrderSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_is_buyer(self, order):
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_buyer(self, order) -> bool:
         request = self.context.get("request")
         return request is not None and order.buyer_id == request.user.pk
 
-    def get_is_provider(self, order):
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_provider(self, order) -> bool:
         request = self.context.get("request")
         return request is not None and order.provider.user_id == request.user.pk
 
-    def get_buyer_email(self, order):
+    @extend_schema_field(serializers.CharField())
+    def get_buyer_email(self, order) -> str:
         request = self.context.get("request")
         return order.buyer.email if request is not None and order.provider.user_id == request.user.pk else ""
 
-    def get_buyer_phone(self, order):
+    @extend_schema_field(serializers.CharField())
+    def get_buyer_phone(self, order) -> str:
         request = self.context.get("request")
         return order.buyer.phone or "" if request is not None and order.provider.user_id == request.user.pk else ""
 
-    def get_provider_email(self, order):
+    @extend_schema_field(serializers.CharField())
+    def get_provider_email(self, order) -> str:
         request = self.context.get("request")
         if request is None or order.buyer_id != request.user.pk:
             return ""
         return order.provider.business_email or ""
 
-    def get_payment_note(self, order):
+    @extend_schema_field(serializers.CharField())
+    def get_payment_note(self, order) -> str:
         return "Combina o pagamento e a entrega diretamente com a empresa."
 
-    def get_review(self, order):
+    @extend_schema_field(ProductOrderReviewSummarySerializer(allow_null=True))
+    def get_review(self, order) -> dict | None:
         try:
             review = order.review
         except ObjectDoesNotExist:

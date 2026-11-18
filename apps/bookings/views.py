@@ -47,6 +47,13 @@ class ScheduleBookingSerializer(serializers.Serializer):
         return atributos
 
 
+class AvailableSlotsResponseSerializer(serializers.Serializer):
+    date = serializers.DateField()
+    duration_minutes = serializers.IntegerField()
+    timezone = serializers.CharField()
+    slots = serializers.ListField(child=serializers.DateTimeField())
+
+
 class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     serializer_class = BookingSerializer
     permission_classes = (IsAuthenticated,)
@@ -60,6 +67,7 @@ class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
             Q(client=utilizador) | Q(provider__user=utilizador)
         ).select_related("provider", "service", "review")
 
+    @extend_schema(request=None, responses=BookingSerializer)
     @action(detail=True, methods=("post",))
     def confirm(self, request, pk=None):
         contratacao = confirmar_contratacao(booking_id=pk, actor=request.user)
@@ -74,7 +82,7 @@ class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
                 required=True,
             )
         ],
-        responses=OpenApiTypes.OBJECT,
+        responses=AvailableSlotsResponseSerializer,
     )
     @action(detail=True, methods=("get",), url_path="available-slots")
     def available_slots(self, request, pk=None):
@@ -117,16 +125,19 @@ class BookingViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.
         )
         return Response(self.get_serializer(contratacao).data)
 
+    @extend_schema(request=None, responses=BookingSerializer)
     @action(detail=True, methods=("post",), url_path="start")
     def start(self, request, pk=None):
         contratacao = iniciar_contratacao(booking_id=pk, actor=request.user)
         return Response(self.get_serializer(contratacao).data)
 
+    @extend_schema(request=None, responses=BookingSerializer)
     @action(detail=True, methods=("post",))
     def complete(self, request, pk=None):
         contratacao = concluir_contratacao(booking_id=pk, actor=request.user)
         return Response(self.get_serializer(contratacao).data)
 
+    @extend_schema(request=None, responses=BookingSerializer)
     @action(detail=True, methods=("post",))
     def cancel(self, request, pk=None):
         contratacao = cancelar_contratacao(booking_id=pk, actor=request.user)

@@ -6,7 +6,7 @@ import Link from "@/lib/link";
 import { usePathname, useRouter } from "@/lib/navigation";
 import { useEffect, useState } from "react";
 import { ArrowUpRight, Bell, BriefcaseBusiness, ClipboardList, Compass, Heart, Home, LogOut, MessageCircle, Package, Plus, Settings, UserRound, } from "lucide-react";
-import { rememberActiveArea } from "@/lib/active-area";
+import { readActiveArea, rememberActiveArea } from "@/lib/active-area";
 import NotificationCenter from "./notification-center";
 import styles from "./auth.module.css";
 async function carregarIdentidade(url) {
@@ -28,6 +28,7 @@ const navigationPorArea = {
         { href: "#notifications", label: "Notificações", icon: Bell },
         { href: "/perfil", label: "Perfil", icon: UserRound },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
+        { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
     ],
     provider: [
         { href: "/prestador", label: "Dashboard", icon: Home },
@@ -35,7 +36,7 @@ const navigationPorArea = {
         { href: "/prestador/servicos", label: "Serviços", icon: ClipboardList },
         { href: "/mensagens", label: "Mensagens", icon: MessageCircle },
         { href: "#notifications", label: "Notificações", icon: Bell },
-        { href: "/contratacoes", label: "Disponibilidade", icon: BriefcaseBusiness },
+        { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
         { href: "/perfil", label: "Perfil profissional", icon: UserRound },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
     ],
@@ -48,7 +49,18 @@ const navigationPorArea = {
         { href: "/mensagens", label: "Mensagens", icon: MessageCircle },
         { href: "#notifications", label: "Notificações", icon: Bell },
         { href: "/perfil#profile-settings", label: "Definições", icon: Settings },
+        { href: "/contratacoes", label: "Contratações", icon: BriefcaseBusiness },
     ],
+};
+const labelsMovel = {
+    Dashboard: "Início",
+    "Explorar serviços": "Explorar",
+    "Meus pedidos": "Pedidos",
+    Contratações: "Contratos",
+    "Explorar pedidos": "Pedidos",
+    "Perfil profissional": "Perfil",
+    "Perfil da empresa": "Empresa",
+    "Pedidos recebidos": "Encomendas",
 };
 export default function EstruturaAutenticacao({ children, account = false, profileName, area, }) {
     const router = useRouter();
@@ -56,7 +68,9 @@ export default function EstruturaAutenticacao({ children, account = false, profi
     const paginaLogin = pathname === "/entrar";
     const areaAtual = area ?? (pathname.startsWith("/empresa") ? "company"
         : pathname.startsWith("/prestador") ? "provider"
-            : "client");
+            : pathname === "/contratacoes" || pathname === "/mensagens"
+                ? readActiveArea() ?? "client"
+                : "client");
     const providerArea = areaAtual === "provider" || areaAtual === "company";
     const companyArea = areaAtual === "company";
     const itemsDaArea = navigationPorArea[areaAtual];
@@ -177,7 +191,9 @@ export default function EstruturaAutenticacao({ children, account = false, profi
         definirImagemPerfilFalhou(false);
     }, [imagemPerfil]);
     useEffect(() => {
-        if (providerArea)
+        if (companyArea)
+            rememberActiveArea("company");
+        else if (providerArea)
             rememberActiveArea("provider");
         else if (pathname === "/conta")
             rememberActiveArea("client");
@@ -188,10 +204,10 @@ export default function EstruturaAutenticacao({ children, account = false, profi
     }
     const nav = (mobile = false) => (_jsx("nav", { className: mobile ? styles.mobileNav : styles.workspaceNav, "aria-label": mobile ? "Navegação móvel" : "Navegação da área pessoal", children: (mobile
             ? areaAtual === "client"
-                ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[4], itemsDaArea[6]]
+                ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[8], itemsDaArea[4], itemsDaArea[6]]
                 : areaAtual === "provider"
-                    ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[2], itemsDaArea[3], itemsDaArea[6]]
-                    : [itemsDaArea[0], itemsDaArea[1], itemsDaArea[2], itemsDaArea[4], itemsDaArea[7]]
+                    ? [itemsDaArea[0], itemsDaArea[1], itemsDaArea[2], itemsDaArea[5], itemsDaArea[3], itemsDaArea[6]]
+                    : [itemsDaArea[0], itemsDaArea[1], itemsDaArea[3], itemsDaArea[4], itemsDaArea[5], itemsDaArea[8]]
             : itemsDaArea).map((item) => {
             const hrefPath = item.href.split("#")[0];
             const ativo = item.href.includes("#")
@@ -205,7 +221,7 @@ export default function EstruturaAutenticacao({ children, account = false, profi
                         rememberActiveArea("client");
                     if (item.href.startsWith("/prestador"))
                         rememberActiveArea("provider");
-                }, children: [_jsx("span", { className: `${styles.navLetter} shrink-0`, "aria-hidden": "true", children: _jsx(Icon, { size: 18, strokeWidth: 1.8 }) }), _jsx("span", { children: item.label })] }, `${item.href}-${item.label}`));
+                }, children: [_jsx("span", { className: `${styles.navLetter} shrink-0`, "aria-hidden": "true", children: _jsx(Icon, { size: 18, strokeWidth: 1.8 }) }), _jsx("span", { children: mobile ? labelsMovel[item.label] ?? item.label : item.label })] }, `${item.href}-${item.label}`));
         }) }));
     async function terminarSessao() {
         definirTerminoSessao(true);

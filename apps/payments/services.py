@@ -1,17 +1,17 @@
 from django.db import IntegrityError, transaction
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from apps.bookings.models import Booking
 
-from .models import Payment
+from .models import Payment, PaymentAuditEvent
 
 
 @transaction.atomic
 def criar_registo_pagamento(*, booking_id, actor, method, external_reference=""):
     contratacao = Booking.objects.select_for_update().filter(pk=booking_id).first()
     if contratacao is None:
-        raise ValidationError({"booking_id": "A contratação indicada não existe."})
+        raise NotFound({"booking_id": "A contratação indicada não existe."})
     if contratacao.client_id != actor.pk:
         raise PermissionDenied(
             {"booking_id": "Só o cliente da contratação pode registar o pagamento."}
@@ -30,13 +30,20 @@ def criar_registo_pagamento(*, booking_id, actor, method, external_reference="")
 
     try:
         with transaction.atomic():
-            return Payment.objects.create(
+            pagamento = Payment.objects.create(
                 booking=contratacao,
                 amount=contratacao.final_price,
                 currency=contratacao.currency,
                 method=method,
                 external_reference=external_reference,
             )
+            PaymentAuditEvent.objects.create(
+                payment=pagamento,
+                actor=actor,
+                previous_status="",
+                new_status=pagamento.status,
+            )
+            return pagamento
     except IntegrityError as exc:
         if Payment.objects.filter(
             booking=contratacao,
@@ -54,7 +61,7 @@ def avaliar_pagamento(*, payment_id, actor, status):
         pk=payment_id
     ).first()
     if payment_reference is None:
-        raise ValidationError("O pagamento indicado não existe.")
+        raise NotFound("O pagamento indicado não existe.")
     Booking.objects.select_for_update().get(pk=payment_reference.booking_id)
     pagamento = Payment.objects.select_for_update().get(pk=payment_id)
 
@@ -65,8 +72,15 @@ def avaliar_pagamento(*, payment_id, actor, status):
     if pagamento.status != Payment.Status.PENDING:
         raise ValidationError("Só é possível rever pagamentos pendentes.")
 
+    previous_status = pagamento.status
     pagamento.status = status
     pagamento.reviewed_by = actor
     pagamento.reviewed_at = timezone.now()
     pagamento.save(update_fields=("status", "reviewed_by", "reviewed_at"))
+    PaymentAuditEvent.objects.create(
+        payment=pagamento,
+        actor=actor,
+        previous_status=previous_status,
+        new_status=status,
+    )
     return pagamento

@@ -4695,6 +4695,29 @@
   color: #075be0;
 }
 
+@media (max-width: 680px) {
+  .workspacePage {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .workspaceHeaderActions > .createAction {
+    max-width: 152px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+
+  .mobileNav .workspaceLink > span:last-child {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: hidden;
+    clip: auto;
+    clip-path: none;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .workspaceMain {
     animation: none;

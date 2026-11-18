@@ -23,6 +23,11 @@ from apps.providers.models import Provider
 from apps.reviews.models import Review
 
 from apps.dashboard.models import ListingView
+from apps.dashboard.serializers import (
+    AdminDashboardResponseSerializer,
+    DashboardResponseSerializer,
+    ProfessionalAnalyticsResponseSerializer,
+)
 from apps.dashboard.services import _analisar_series_temporais
 
 User = get_user_model()
@@ -143,6 +148,8 @@ class DashboardApiTests(APITestCase):
         resposta = self.client.get(self.url)
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        contrato = DashboardResponseSerializer(data=resposta.data)
+        self.assertTrue(contrato.is_valid(), contrato.errors)
         self.assertEqual(
             resposta.data["client"]["orders_by_status"]["COMPLETED"],
             1,
@@ -253,6 +260,8 @@ class DashboardApiTests(APITestCase):
         resposta = self.client.get(reverse("dashboard-analytics"), {"period": 7})
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        contrato = ProfessionalAnalyticsResponseSerializer(data=resposta.data)
+        self.assertTrue(contrato.is_valid(), contrato.errors)
         self.assertEqual(resposta.data["period_days"], 7)
         self.assertEqual(resposta.data["summary"]["views"], 1)
         self.assertEqual(resposta.data["summary"]["service_orders"], 1)
@@ -302,6 +311,8 @@ class DashboardApiTests(APITestCase):
         resposta = self.client.get(reverse("admin-dashboard"), {"period": 30})
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        contrato = AdminDashboardResponseSerializer(data=resposta.data)
+        self.assertTrue(contrato.is_valid(), contrato.errors)
         self.assertEqual(resposta.data["summary"]["businesses_total"], 2)
         self.assertEqual(
             resposta.data["summary"]["business_verifications_pending"],

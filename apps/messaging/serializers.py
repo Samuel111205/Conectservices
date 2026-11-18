@@ -1,4 +1,5 @@
 from django.core.validators import RegexValidator
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from apps.proposals.models import Proposal
@@ -41,7 +42,8 @@ class ConversationSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_contact_name(self, conversa):
+    @extend_schema_field(serializers.CharField())
+    def get_contact_name(self, conversa) -> str:
         request = self.context.get("request")
         if request and request.user.pk == conversa.proposal.order.client_id:
             return conversa.proposal.provider.commercial_name
@@ -113,7 +115,8 @@ class NotificationSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_href(self, notification):
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_href(self, notification) -> str | None:
         request = self.context.get("request")
         if notification.product_order_id is not None:
             if (
@@ -154,3 +157,15 @@ class PushDeviceTokenSerializer(serializers.ModelSerializer):
 
 class DeactivatePushTokenSerializer(serializers.Serializer):
     token = serializers.CharField(max_length=255)
+
+
+class UnreadNotificationCountSerializer(serializers.Serializer):
+    unread_count = serializers.IntegerField()
+
+
+class MarkNotificationsReadSerializer(serializers.Serializer):
+    marked_read = serializers.IntegerField()
+
+
+class DeactivatePushTokenResponseSerializer(serializers.Serializer):
+    deactivated = serializers.BooleanField()

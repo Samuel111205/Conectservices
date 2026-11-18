@@ -16,6 +16,7 @@ class ProviderDiscoverySerializer(serializers.ModelSerializer):
         read_only=True,
     )
     review_count = serializers.IntegerField(read_only=True)
+    view_count = serializers.IntegerField(read_only=True)
 
     class Meta:
         model = Provider
@@ -28,6 +29,7 @@ class ProviderDiscoverySerializer(serializers.ModelSerializer):
             "active_service_count",
             "average_rating",
             "review_count",
+            "view_count",
         )
 
 

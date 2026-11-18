@@ -302,6 +302,13 @@ class BookingApiTests(APITestCase):
         self.booking.refresh_from_db()
         self.assertEqual(self.booking.status, Booking.Status.IN_PROGRESS)
 
+    def test__acao_sobre_contratacao_inexistente_retorna_404(self):
+        self.client.force_authenticate(self.client_user)
+
+        resposta = self.client.post(reverse("booking-cancel", args=(999999,)))
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
     def test__utilizador_nao_pode_modify_contratacao_campos_na_api(self):
         self.client.force_authenticate(self.client_user)
 

@@ -1,7 +1,7 @@
 from django.contrib import admin, messages
 from rest_framework.exceptions import APIException
 
-from .models import Payment
+from .models import Payment, PaymentAuditEvent
 from .services import avaliar_pagamento
 
 
@@ -67,4 +67,27 @@ class PaymentAdmin(admin.ModelAdmin):
         return False
 
     def has_delete_permission(self, request, objeto=None):
+        return False
+
+
+@admin.register(PaymentAuditEvent)
+class PaymentAuditEventAdmin(admin.ModelAdmin):
+    list_display = ("payment", "previous_status", "new_status", "actor", "created_at")
+    list_filter = ("new_status", "created_at")
+    search_fields = ("payment__id", "actor__email")
+    readonly_fields = (
+        "payment",
+        "actor",
+        "previous_status",
+        "new_status",
+        "created_at",
+    )
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
         return False

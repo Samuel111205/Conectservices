@@ -1,7 +1,9 @@
 from decimal import Decimal
 
 from django.db.models import Avg, Count, Q
-from rest_framework import mixins, viewsets
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
+from rest_framework import mixins, serializers, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
@@ -9,6 +11,12 @@ from rest_framework.response import Response
 
 from .models import Review
 from .serializers import ReviewSerializer
+
+
+class ReviewSummaryResponseSerializer(serializers.Serializer):
+    provider_id = serializers.IntegerField()
+    average_rating = serializers.CharField(allow_null=True)
+    review_count = serializers.IntegerField()
 
 
 class ReviewViewSet(
@@ -45,6 +53,31 @@ class ReviewViewSet(
             )
         return consulta
 
+    @extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter(
+                "provider_id",
+                OpenApiTypes.INT,
+                description="Filtra as avaliações pelo identificador do prestador.",
+            )
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
+    @extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter(
+                "provider_id",
+                OpenApiTypes.INT,
+                required=True,
+                description="Identificador do prestador.",
+            )
+        ],
+        responses=ReviewSummaryResponseSerializer,
+    )
     @action(detail=False, methods=("get",))
     def summary(self, request):
         id_prestador = self._provider_id(required=True)

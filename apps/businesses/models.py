@@ -9,10 +9,20 @@ def business_logo_upload_to(instance, filename):
 
 
 class BusinessProfile(models.Model):
+    class BusinessType(models.TextChoices):
+        COMPANY = "COMPANY", "Empresa"
+        ENTREPRENEUR = "ENTREPRENEUR", "Empreendedor"
+
     provider = models.OneToOneField(
         Provider,
         on_delete=models.PROTECT,
         related_name="business_profile",
+    )
+    business_type = models.CharField(
+        max_length=16,
+        choices=BusinessType.choices,
+        default=BusinessType.COMPANY,
+        db_index=True,
     )
     registered_name = models.CharField(max_length=160, blank=True)
     logo = models.ImageField(

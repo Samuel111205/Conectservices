@@ -1,12 +1,21 @@
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
 
 from .models import Booking
+
+
+def _get_booking_for_update(*, booking_id, select_related=()):
+    try:
+        return Booking.objects.select_for_update().select_related(*select_related).get(
+            pk=booking_id
+        )
+    except Booking.DoesNotExist as exc:
+        raise NotFound("A contratação indicada não existe.") from exc
 
 
 @transaction.atomic
@@ -81,10 +90,10 @@ def aceitar_proposta(*, proposal_id, actor):
 
 @transaction.atomic
 def confirmar_contratacao(*, booking_id, actor):
-    contratacao = Booking.objects.select_for_update().select_related(
-        "client",
-        "provider__user",
-    ).get(pk=booking_id)
+    contratacao = _get_booking_for_update(
+        booking_id=booking_id,
+        select_related=("client", "provider__user"),
+    )
     if contratacao.client_id != actor.pk:
         raise PermissionDenied("Só o cliente pode confirmar a contratação.")
     if contratacao.status != Booking.Status.SCHEDULED:
@@ -98,9 +107,10 @@ def confirmar_contratacao(*, booking_id, actor):
 
 @transaction.atomic
 def iniciar_contratacao(*, booking_id, actor):
-    contratacao = Booking.objects.select_for_update().select_related(
-        "provider__user",
-    ).get(pk=booking_id)
+    contratacao = _get_booking_for_update(
+        booking_id=booking_id,
+        select_related=("provider__user",),
+    )
     if contratacao.provider.user_id != actor.pk:
         raise PermissionDenied("Só o prestador contratado pode iniciar o serviço.")
     if not actor.is_active or contratacao.provider.verification_status != Provider.VerificationStatus.VERIFIED:
@@ -116,10 +126,10 @@ def iniciar_contratacao(*, booking_id, actor):
 
 @transaction.atomic
 def concluir_contratacao(*, booking_id, actor):
-    contratacao = Booking.objects.select_for_update().select_related(
-        "order",
-        "client",
-    ).get(pk=booking_id)
+    contratacao = _get_booking_for_update(
+        booking_id=booking_id,
+        select_related=("order", "client"),
+    )
     if contratacao.client_id != actor.pk:
         raise PermissionDenied("Só o cliente pode confirmar a conclusão do serviço.")
     if contratacao.status != Booking.Status.IN_PROGRESS:
@@ -135,11 +145,10 @@ def concluir_contratacao(*, booking_id, actor):
 
 @transaction.atomic
 def cancelar_contratacao(*, booking_id, actor):
-    contratacao = Booking.objects.select_for_update().select_related(
-        "order",
-        "client",
-        "provider__user",
-    ).get(pk=booking_id)
+    contratacao = _get_booking_for_update(
+        booking_id=booking_id,
+        select_related=("order", "client", "provider__user"),
+    )
     participant_ids = (contratacao.client_id, contratacao.provider.user_id)
     if actor.pk not in participant_ids:
         raise PermissionDenied("Só os participantes podem cancelar a contratação.")

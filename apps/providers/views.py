@@ -17,11 +17,15 @@ from django.db.models import (
 from django.db.models.functions import Cast, Coalesce
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import generics, status
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from apps.businesses.models import BusinessProfile
+from apps.dashboard.models import ListingView
 from apps.reviews.models import Review
 
 from .models import Provider, ProviderVerificationDocument
@@ -108,6 +112,26 @@ def _anotar_avaliacoes(queryset):
     )
 
 
+def _anotar_visualizacoes(queryset):
+    return queryset.annotate(
+        view_count=Coalesce(
+            Subquery(
+                ListingView.objects.filter(
+                    listing_type=ListingView.ListingType.PROVIDER,
+                    listing_id=OuterRef("pk"),
+                )
+                .order_by()
+                .values("listing_id")
+                .annotate(total=Count("pk"))
+                .values("total")[:1],
+                output_field=IntegerField(),
+            ),
+            Value(0),
+            output_field=IntegerField(),
+        )
+    )
+
+
 class ProviderCreateView(generics.CreateAPIView):
     serializer_class = ProviderSerializer
     permission_classes = (IsAuthenticated,)
@@ -181,6 +205,7 @@ class SubmitProviderVerificationView(generics.GenericAPIView):
     permission_classes = (IsAuthenticated,)
     http_method_names = ("post", "head", "options")
 
+    @extend_schema(request=None, responses={status.HTTP_200_OK: ProviderSerializer})
     def post(self, request):
         provider = getattr(request.user, "provider", None)
         if provider is None:
@@ -223,28 +248,67 @@ class SubmitProviderVerificationView(generics.GenericAPIView):
         )
 
 
+@extend_schema_view(
+    get=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "audience",
+                OpenApiTypes.STR,
+                enum=("providers", "companies", "entrepreneurs"),
+                description="Filtra prestadores sem perfil empresarial, empresas ou empreendedores.",
+            ),
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por nome, descrição ou serviço."),
+            OpenApiParameter("category", OpenApiTypes.INT, description="Identificador da categoria."),
+            OpenApiParameter("municipality", OpenApiTypes.INT, description="Identificador do município de cobertura."),
+            OpenApiParameter(
+                "ordering",
+                OpenApiTypes.STR,
+                enum=("name", "-name", "rating", "-rating", "services", "-services", "views", "-views"),
+                default="name",
+            ),
+        ]
+    )
+)
 class ProviderDiscoveryView(generics.ListAPIView):
     serializer_class = ProviderDiscoverySerializer
 
     def get_queryset(self):
         consulta = _anotar_avaliacoes(
-            Provider.objects.filter(
-                verification_status=Provider.VerificationStatus.VERIFIED,
-                user__is_active=True,
-            )
-            .select_related("business_profile")
-            .annotate(
-                active_service_count=Count(
-                    "services",
-                    filter=Q(
-                        services__is_active=True,
-                        services__category__is_active=True,
+            _anotar_visualizacoes(
+                Provider.objects.filter(
+                    verification_status=Provider.VerificationStatus.VERIFIED,
+                    user__is_active=True,
+                )
+                .select_related("business_profile")
+                .annotate(
+                    active_service_count=Count(
+                        "services",
+                        filter=Q(
+                            services__is_active=True,
+                            services__category__is_active=True,
+                        ),
+                        distinct=True,
                     ),
-                    distinct=True,
-                ),
+                )
             )
-            .filter(active_service_count__gt=0)
         )
+
+        audience = self.request.query_params.get("audience")
+        audience_filters = {
+            "providers": {"business_profile__isnull": True},
+            "companies": {
+                "business_profile__business_type": BusinessProfile.BusinessType.COMPANY,
+            },
+            "entrepreneurs": {
+                "business_profile__business_type": BusinessProfile.BusinessType.ENTREPRENEUR,
+            },
+        }
+        if audience:
+            if audience not in audience_filters:
+                raise ValidationError(
+                    {"audience": "Usa providers, companies ou entrepreneurs."}
+                )
+            consulta = consulta.filter(**audience_filters[audience])
 
         pesquisa = self.request.query_params.get("search", "").strip()
         if pesquisa:
@@ -296,13 +360,15 @@ class ProviderDiscoveryView(generics.ListAPIView):
             "-rating": "-average_rating",
             "services": "active_service_count",
             "-services": "-active_service_count",
+            "views": "view_count",
+            "-views": "-view_count",
         }
         if ordering not in ordering_fields:
             raise ValidationError(
                 {
                     "ordering": (
                         "Ordenação inválida. Usa name, -name, rating, -rating, "
-                        "services ou -services."
+                        "services, -services, views ou -views."
                     )
                 }
             )
@@ -323,5 +389,5 @@ class ProviderPublicDetailView(generics.RetrieveAPIView):
                 filter=Q(services__is_active=True, services__category__is_active=True),
                 distinct=True,
             ),
-        ).filter(active_service_count__gt=0)
-        return _anotar_avaliacoes(consulta)
+        )
+        return _anotar_avaliacoes(_anotar_visualizacoes(consulta))

@@ -1,9 +1,11 @@
 from django.db.models import Q
+from drf_spectacular.utils import extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
+from apps.bookings.serializers import BookingSerializer
 from apps.orders.models import ServiceOrder
 from apps.providers.models import Provider
 
@@ -65,23 +67,24 @@ class ProposalViewSet(
             )
         serializer.save()
 
+    @extend_schema(request=None, responses=ProposalSerializer)
     @action(detail=True, methods=("post",))
     def cancel(self, request, pk=None):
         proposta = cancelar_proposta(proposal_id=pk, actor=request.user)
         return Response(self.get_serializer(proposta).data)
 
+    @extend_schema(request=None, responses=ProposalSerializer)
     @action(detail=True, methods=("post",))
     def reject(self, request, pk=None):
         proposta = rejeitar_proposta(proposal_id=pk, actor=request.user)
         return Response(self.get_serializer(proposta).data)
 
+    @extend_schema(request=None, responses={status.HTTP_201_CREATED: BookingSerializer})
     @action(detail=True, methods=("post",))
     def accept(self, request, pk=None):
         from apps.bookings.services import aceitar_proposta
 
         contratacao = aceitar_proposta(proposal_id=pk, actor=request.user)
-        from apps.bookings.serializers import BookingSerializer
-
         return Response(
             BookingSerializer(contratacao, context={"request": request}).data,
             status=status.HTTP_201_CREATED,

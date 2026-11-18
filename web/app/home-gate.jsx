@@ -35,10 +35,25 @@ export default function HomeGate() {
                 if (area === "provider" && perfilProfissional.status === 404) {
                     area = "client";
                 }
+                if (area === "company") {
+                    const perfilEmpresa = await fetchApi("/api/auth/businesses/me/", {
+                        cache: "no-store",
+                    });
+                    if (!ativo)
+                        return;
+                    if (perfilEmpresa.status === 404)
+                        area = "provider";
+                }
                 if (!area)
                     area = perfilProfissional.ok ? "provider" : "client";
                 rememberActiveArea(area);
-                router.replace(area === "provider" ? "/prestador" : "/conta");
+                router.replace(
+                    area === "company"
+                        ? "/empresa"
+                        : area === "provider"
+                            ? "/prestador"
+                            : "/conta",
+                );
             }
             catch {
                 // A página pública continua disponível se a API estiver temporariamente indisponível.

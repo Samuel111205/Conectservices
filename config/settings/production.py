@@ -104,4 +104,5 @@ SECURE_HSTS_INCLUDE_SUBDOMAINS = (
 )
 SECURE_HSTS_PRELOAD = os.environ.get("DJANGO_HSTS_PRELOAD", "").lower() == "true"
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 X_FRAME_OPTIONS = "DENY"

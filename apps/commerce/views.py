@@ -1,4 +1,6 @@
 from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -22,6 +24,16 @@ from .services import (
 )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por produto, empresa ou categoria."),
+            OpenApiParameter("category", OpenApiTypes.INT, description="Identificador da categoria."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class ProductViewSet(viewsets.ModelViewSet):
     serializer_class = ProductSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)
@@ -127,6 +139,10 @@ class ProductOrderViewSet(
             return ProductOrderCreateSerializer
         return ProductOrderSerializer
 
+    @extend_schema(
+        request=ProductOrderCreateSerializer,
+        responses={status.HTTP_201_CREATED: ProductOrderSerializer},
+    )
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -140,21 +156,25 @@ class ProductOrderViewSet(
             status=status.HTTP_201_CREATED,
         )
 
+    @extend_schema(request=None, responses=ProductOrderSerializer)
     @action(detail=True, methods=("post",))
     def accept(self, request, pk=None):
         order = aceitar_encomenda(order_id=pk, actor=request.user)
         return Response(self.get_serializer(order).data)
 
+    @extend_schema(request=None, responses=ProductOrderSerializer)
     @action(detail=True, methods=("post",))
     def reject(self, request, pk=None):
         order = recusar_encomenda(order_id=pk, actor=request.user)
         return Response(self.get_serializer(order).data)
 
+    @extend_schema(request=None, responses=ProductOrderSerializer)
     @action(detail=True, methods=("post",))
     def complete(self, request, pk=None):
         order = concluir_encomenda(order_id=pk, actor=request.user)
         return Response(self.get_serializer(order).data)
 
+    @extend_schema(request=None, responses=ProductOrderSerializer)
     @action(detail=True, methods=("post",))
     def cancel(self, request, pk=None):
         order = cancelar_encomenda(order_id=pk, actor=request.user)

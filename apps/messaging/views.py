@@ -4,7 +4,6 @@ from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 
 from apps.orders.models import ServiceOrder
@@ -13,11 +12,14 @@ from apps.proposals.models import Proposal
 from .models import Conversation, Message, Notification
 from .serializers import (
     ConversationSerializer,
+    DeactivatePushTokenResponseSerializer,
     DeactivatePushTokenSerializer,
+    MarkNotificationsReadSerializer,
     MessageSerializer,
     NotificationSerializer,
     OpenConversationSerializer,
     PushDeviceTokenSerializer,
+    UnreadNotificationCountSerializer,
 )
 from .services import (
     marcar_todas_notificacoes_como_lidas,
@@ -44,6 +46,13 @@ class ConversationViewSet(
             return MessageSerializer
         return ConversationSerializer
 
+    @extend_schema(
+        request=OpenConversationSerializer,
+        responses={
+            status.HTTP_200_OK: ConversationSerializer,
+            status.HTTP_201_CREATED: ConversationSerializer,
+        },
+    )
     def create(self, request, *args, **kwargs):
         serializador = self.get_serializer(data=request.data)
         serializador.is_valid(raise_exception=True)
@@ -90,6 +99,12 @@ class ConversationViewSet(
             last_message_preview=Subquery(last_message_preview),
         ).order_by("-updated_at", "-pk")
 
+    @extend_schema(methods=["GET"], responses=MessageSerializer(many=True))
+    @extend_schema(
+        methods=["POST"],
+        request=MessageSerializer,
+        responses={status.HTTP_201_CREATED: MessageSerializer},
+    )
     @action(detail=True, methods=("get", "post"))
     def messages(self, request, pk=None):
         conversa = self.get_object()
@@ -136,16 +151,22 @@ class NotificationViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
             recipient=self.request.user,
         ).select_related("conversation", "actor", "product_order__provider")
 
+    @extend_schema(responses=UnreadNotificationCountSerializer)
     @action(detail=False, methods=("get",))
     def unread_count(self, request):
         count = self.get_queryset().filter(read_at__isnull=True).count()
         return Response({"unread_count": count})
 
+    @extend_schema(
+        request=None,
+        responses=MarkNotificationsReadSerializer,
+    )
     @action(detail=False, methods=("post",))
     def read_all(self, request):
         count = marcar_todas_notificacoes_como_lidas(user=request.user)
         return Response({"marked_read": count})
 
+    @extend_schema(request=None, responses=NotificationSerializer)
     @action(detail=True, methods=("post",))
     def read(self, request, pk=None):
         notificacao = self.get_object()
@@ -170,6 +191,10 @@ class PushDeviceTokenViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
             status=status.HTTP_200_OK,
         )
 
+    @extend_schema(
+        request=DeactivatePushTokenSerializer,
+        responses=DeactivatePushTokenResponseSerializer,
+    )
     @action(detail=False, methods=("post",))
     def deactivate(self, request):
         serializer = DeactivatePushTokenSerializer(data=request.data)

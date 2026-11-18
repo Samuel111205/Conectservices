@@ -1,5 +1,10 @@
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import (
+    OpenApiParameter,
+    extend_schema,
+    extend_schema_view,
+)
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -14,6 +19,20 @@ from .serializers import CategorySerializer, ServiceSerializer
 from .services import desativar_categoria, registar_alteracao_categoria, guardar_categoria
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter(
+                "parent",
+                OpenApiTypes.STR,
+                description="Identificador da categoria-pai ou `null` para categorias-raiz.",
+            ),
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por nome ou descrição."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class CategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = (PublicReadAdminWrite,)
@@ -52,6 +71,17 @@ class CategoryViewSet(viewsets.ModelViewSet):
         desativar_categoria(category=instance, actor=self.request.user)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter("category", OpenApiTypes.INT, description="Identificador da categoria."),
+            OpenApiParameter("provider", OpenApiTypes.INT, description="Identificador do prestador."),
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por nome ou descrição."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class ServiceViewSet(viewsets.ModelViewSet):
     serializer_class = ServiceSerializer
     permission_classes = (IsAuthenticatedOrReadOnly,)

@@ -1,5 +1,6 @@
 from django.db.models import Q
-from drf_spectacular.utils import extend_schema
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework import mixins, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -99,7 +100,14 @@ class ServiceOrderViewSet(
             raise PermissionDenied("A conta está inativa.")
         serializer.save()
 
-    @extend_schema(responses={200: OrderOpportunitySerializer(many=True)})
+    @extend_schema(
+        parameters=[
+            OpenApiParameter("category", OpenApiTypes.INT, description="Identificador da categoria."),
+            OpenApiParameter("municipality", OpenApiTypes.INT, description="Identificador do município."),
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa no título e descrição do pedido."),
+        ],
+        responses={200: OrderOpportunitySerializer(many=True)},
+    )
     @action(detail=False, methods=("get",), url_path="opportunities")
     def opportunities(self, request):
         prestador = getattr(request.user, "provider", None)
@@ -121,6 +129,10 @@ class ServiceOrderViewSet(
             return self.get_paginated_response(serializador.data)
         return Response(serializador.data, status=status.HTTP_200_OK)
 
+    @extend_schema(
+        request=None,
+        responses={200: OrderStatusSerializer},
+    )
     @action(detail=True, methods=("post",))
     def cancel(self, request, pk=None):
         pedido = cancelar_pedido(order_id=pk, actor=request.user)

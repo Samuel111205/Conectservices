@@ -5,7 +5,7 @@ from .models import BusinessProfile
 
 @admin.register(BusinessProfile)
 class BusinessProfileAdmin(admin.ModelAdmin):
-    list_display = ("provider", "registered_name", "website", "updated_at")
+    list_display = ("provider", "business_type", "registered_name", "website", "updated_at")
     search_fields = (
         "provider__commercial_name",
         "provider__user__email",
@@ -14,6 +14,7 @@ class BusinessProfileAdmin(admin.ModelAdmin):
     readonly_fields = ("created_at", "updated_at")
     fields = (
         "provider",
+        "business_type",
         "registered_name",
         "logo",
         "website",

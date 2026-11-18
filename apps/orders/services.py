@@ -1,13 +1,15 @@
 from django.db import transaction
 from django.utils import timezone
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import NotFound, PermissionDenied, ValidationError
 
 from .models import ServiceOrder
 
 
 @transaction.atomic
 def cancelar_pedido(*, order_id, actor):
-    pedido = ServiceOrder.objects.select_for_update().get(pk=order_id)
+    pedido = ServiceOrder.objects.select_for_update().filter(pk=order_id).first()
+    if pedido is None:
+        raise NotFound("O pedido indicado não existe.")
     if pedido.client_id != actor.pk:
         raise PermissionDenied("Só o cliente que criou o pedido pode cancelá-lo.")
     if pedido.status not in (

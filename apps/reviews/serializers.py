@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 
 from .models import Review
 from .services import criar_avaliacao
@@ -46,12 +47,14 @@ class ReviewSerializer(serializers.ModelSerializer):
             )
         return atributos
 
-    def get_provider_id(self, review):
+    @extend_schema_field(serializers.IntegerField())
+    def get_provider_id(self, review) -> int:
         if review.booking_id is not None:
             return review.booking.provider_id
         return review.product_order.provider_id
 
-    def get_provider_name(self, review):
+    @extend_schema_field(serializers.CharField())
+    def get_provider_name(self, review) -> str:
         if review.booking_id is not None:
             return review.booking.provider.commercial_name
         return review.product_order.provider.commercial_name

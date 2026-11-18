@@ -1,4 +1,6 @@
 from rest_framework import viewsets
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
@@ -32,6 +34,19 @@ class WeeklyAvailabilityViewSet(viewsets.ModelViewSet):
         if prestador is None:
             return WeeklyAvailability.objects.none()
         return WeeklyAvailability.objects.filter(provider=prestador)
+
+    @extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter(
+                "provider",
+                OpenApiTypes.INT,
+                description="Identificador do prestador verificado.",
+            )
+        ],
+    )
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
     def get_permissions(self):
         if self.action == "list":

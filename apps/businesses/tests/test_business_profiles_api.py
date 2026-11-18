@@ -50,6 +50,10 @@ class BusinessProfileApiTests(APITestCase):
         provider = Provider.objects.get(user=self.user)
         profile = BusinessProfile.objects.get(provider=provider)
         self.assertEqual(profile.registered_name, "Conect Limpezas, Lda.")
+        self.assertEqual(
+            profile.business_type,
+            BusinessProfile.BusinessType.COMPANY,
+        )
         self.assertEqual(provider.commercial_name, "Conect Limpezas")
         self.assertEqual(
             provider.verification_status,
@@ -121,6 +125,30 @@ class BusinessProfileApiTests(APITestCase):
         self.assertEqual(other_provider.commercial_name, "Outra empresa")
         self.assertEqual(actualizacao.data["website"], "https://novo.example")
 
+    def test__perfil_empresarial_pode_ser_classificado_como_empreendedor(self):
+        provider = Provider.objects.create(
+            user=self.user,
+            commercial_name="Conect Limpezas",
+        )
+        BusinessProfile.objects.create(provider=provider)
+        self.client.force_authenticate(self.user)
+
+        resposta = self.client.patch(
+            reverse("business-profile-me"),
+            {"business_type": BusinessProfile.BusinessType.ENTREPRENEUR},
+        )
+
+        self.assertEqual(resposta.status_code, status.HTTP_200_OK)
+        self.assertEqual(
+            resposta.data["business_type"],
+            BusinessProfile.BusinessType.ENTREPRENEUR,
+        )
+        provider.refresh_from_db()
+        self.assertEqual(
+            provider.business_profile.business_type,
+            BusinessProfile.BusinessType.ENTREPRENEUR,
+        )
+
     def test__estado_de_verificacao_nao_pode_ser_alterado_pela_empresa(self):
         provider = Provider.objects.create(
             user=self.user,
@@ -179,6 +207,10 @@ class BusinessProfileApiTests(APITestCase):
 
         self.assertEqual(resposta.status_code, status.HTTP_200_OK)
         public_business = resposta.data["results"][0]["business_profile"]
+        self.assertEqual(
+            public_business["business_type"],
+            BusinessProfile.BusinessType.COMPANY,
+        )
         self.assertEqual(public_business["website"], profile.website)
         self.assertEqual(public_business["opening_hours"]["monday"], "08:00-17:00")
         self.assertNotIn("address", public_business)

@@ -1,7 +1,14 @@
 from django.core.exceptions import ObjectDoesNotExist
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Booking
+
+
+class BookingReviewSummarySerializer(serializers.Serializer):
+    rating = serializers.IntegerField()
+    comment = serializers.CharField(allow_blank=True)
+    created_at = serializers.DateTimeField()
 
 
 class BookingSerializer(serializers.ModelSerializer):
@@ -38,18 +45,21 @@ class BookingSerializer(serializers.ModelSerializer):
         )
         read_only_fields = fields
 
-    def get_is_client(self, booking):
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_client(self, booking) -> bool:
         requisicao = self.context.get("request")
         return requisicao is not None and booking.client_id == requisicao.user.pk
 
-    def get_is_provider(self, booking):
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_provider(self, booking) -> bool:
         requisicao = self.context.get("request")
         return (
             requisicao is not None
             and booking.provider.user_id == requisicao.user.pk
         )
 
-    def get_review(self, booking):
+    @extend_schema_field(BookingReviewSummarySerializer(allow_null=True))
+    def get_review(self, booking) -> dict | None:
         try:
             review = booking.review
         except ObjectDoesNotExist:

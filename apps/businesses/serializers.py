@@ -9,7 +9,7 @@ from .services import atualizar_perfil_empresarial, criar_perfil_empresarial
 class BusinessProfilePublicSerializer(serializers.ModelSerializer):
     class Meta:
         model = BusinessProfile
-        fields = ("logo", "website", "opening_hours")
+        fields = ("business_type", "logo", "website", "opening_hours")
         read_only_fields = fields
 
 
@@ -43,6 +43,7 @@ class BusinessProfileSerializer(serializers.ModelSerializer):
         model = BusinessProfile
         fields = (
             "id",
+            "business_type",
             "commercial_name",
             "description",
             "business_phone",

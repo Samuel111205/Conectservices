@@ -69,6 +69,19 @@ class TokenBodySerializer(serializers.Serializer):
     token = serializers.CharField()
 
 
+class EmailOnlySerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+
+class CsrfTokenSerializer(serializers.Serializer):
+    csrf_token = serializers.CharField()
+
+
+class WebLoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField(write_only=True, trim_whitespace=False)
+
+
 class EmailVerificationView(APIView):
     permission_classes = (AllowAny,)
     authentication_classes = ()
@@ -105,6 +118,10 @@ class ResendEmailVerificationView(APIView):
     authentication_classes = ()
     throttle_classes = (RecoveryThrottle,)
 
+    @extend_schema(
+        request=EmailOnlySerializer,
+        responses={200: RegistrationResponseSerializer},
+    )
     def post(self, request):
         serializer = EmailOnlySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -124,6 +141,10 @@ class PasswordResetRequestView(APIView):
     authentication_classes = ()
     throttle_classes = (RecoveryThrottle,)
 
+    @extend_schema(
+        request=EmailOnlySerializer,
+        responses={200: RegistrationResponseSerializer},
+    )
     def post(self, request):
         serializer = EmailOnlySerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -146,14 +167,14 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
     password = serializers.CharField(write_only=True, trim_whitespace=False)
 
 
-class EmailOnlySerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-
 class PasswordResetConfirmView(APIView):
     permission_classes = (AllowAny,)
     authentication_classes = ()
 
+    @extend_schema(
+        request=PasswordResetConfirmSerializer,
+        responses={200: RegistrationResponseSerializer},
+    )
     def post(self, request):
         serializer = PasswordResetConfirmSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -197,6 +218,11 @@ class VerifiedTokenObtainPairSerializer(TokenObtainPairSerializer):
         return super().get_token(user)
 
 
+class TokenPairResponseSerializer(serializers.Serializer):
+    access = serializers.CharField()
+    refresh = serializers.CharField()
+
+
 class LoginView(TokenObtainPairView):
     serializer_class = VerifiedTokenObtainPairSerializer
     permission_classes = (AllowAny,)
@@ -204,10 +230,9 @@ class LoginView(TokenObtainPairView):
     throttle_classes = (LoginThrottle,)
     throttle_scope = "auth_login"
 
-
-class WebLoginSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    password = serializers.CharField(write_only=True, trim_whitespace=False)
+    @extend_schema(responses={status.HTTP_200_OK: TokenPairResponseSerializer})
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
 
 
 @method_decorator(csrf_protect, name="dispatch")
@@ -215,6 +240,7 @@ class WebCsrfView(APIView):
     permission_classes = (AllowAny,)
     authentication_classes = ()
 
+    @extend_schema(responses={200: CsrfTokenSerializer})
     def get(self, request):
         return Response({"csrf_token": get_token(request)})
 
@@ -226,6 +252,10 @@ class WebSessionView(APIView):
     throttle_classes = (LoginThrottle,)
     throttle_scope = "auth_login"
 
+    @extend_schema(
+        request=WebLoginSerializer,
+        responses={200: RegistrationResponseSerializer},
+    )
     def post(self, request):
         serializer = WebLoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -247,6 +277,7 @@ class WebSessionView(APIView):
 class WebLogoutView(APIView):
     permission_classes = (IsAuthenticated,)
 
+    @extend_schema(request=None, responses={204: None})
     def post(self, request):
         logout(request)
         return Response(status=status.HTTP_204_NO_CONTENT)

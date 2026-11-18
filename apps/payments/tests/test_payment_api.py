@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.test import override_settings
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.exceptions import PermissionDenied
+from rest_framework.exceptions import NotFound, PermissionDenied
 from rest_framework.test import APITestCase
 
 from apps.bookings.models import Booking
@@ -12,6 +12,7 @@ from apps.orders.models import ServiceOrder
 from apps.proposals.models import Proposal
 from apps.providers.models import Provider
 from apps.payments.models import Payment
+from apps.payments.models import PaymentAuditEvent
 from apps.payments.services import avaliar_pagamento
 
 User = get_user_model()
@@ -108,6 +109,10 @@ class PaymentApiTests(APITestCase):
         self.assertEqual(resposta.data["amount"], "18000.00")
         self.assertEqual(resposta.data["currency"], "AOA")
         self.assertEqual(resposta.data["status"], Payment.Status.PENDING)
+        evento = PaymentAuditEvent.objects.get(payment_id=resposta.data["id"])
+        self.assertEqual(evento.actor, self.client_user)
+        self.assertEqual(evento.previous_status, "")
+        self.assertEqual(evento.new_status, Payment.Status.PENDING)
 
     def test__apenas_cliente_pode_registar_pagamento_and_apenas_participants_pode_listar(self):
         self.client.force_authenticate(self.outsider)
@@ -157,6 +162,13 @@ class PaymentApiTests(APITestCase):
         self.assertEqual(rejected.status, Payment.Status.REJECTED)
         self.assertEqual(rejected.reviewed_by_id, self.admin_user.pk)
         self.assertIsNotNone(rejected.reviewed_at)
+        evento = PaymentAuditEvent.objects.get(
+            payment=rejected,
+            new_status=Payment.Status.REJECTED,
+        )
+        self.assertEqual(evento.actor, self.admin_user)
+        self.assertEqual(evento.previous_status, Payment.Status.PENDING)
+        self.assertEqual(evento.new_status, Payment.Status.REJECTED)
 
         retry = self.client.post(
             self.list_url,
@@ -173,6 +185,14 @@ class PaymentApiTests(APITestCase):
         self.assertEqual(primeiro.status_code, status.HTTP_201_CREATED)
         self.assertEqual(second.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Payment.objects.filter(booking=self.booking).count(), 1)
+
+    def test__pagamento_inexistente_retorna_404_ao_revisto(self):
+        with self.assertRaises(NotFound):
+            avaliar_pagamento(
+                payment_id=999999,
+                actor=self.admin_user,
+                status=Payment.Status.CONFIRMED,
+            )
 
     def test__nao_pode_registar_pagamento_para_cancelado_contratacao(self):
         self.booking.status = Booking.Status.CANCELLED

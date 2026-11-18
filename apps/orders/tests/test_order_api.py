@@ -151,6 +151,13 @@ class ServiceOrderApiTests(APITestCase):
         self.assertEqual(list_response.data["count"], 0)
         self.assertEqual(detail_response.status_code, status.HTTP_404_NOT_FOUND)
 
+    def test__cancelar_pedido_inexistente_retorna_404(self):
+        self.client.force_authenticate(self.client_user)
+
+        resposta = self.client.post(reverse("order-cancel", args=(999999,)))
+
+        self.assertEqual(resposta.status_code, status.HTTP_404_NOT_FOUND)
+
     def test__verificado_prestador_sees_sanitized_opportunities(self):
         self.provider.mark_verified()
         ProviderCoverage.objects.create(

@@ -1,4 +1,6 @@
 from django.db.models import Q
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import OpenApiParameter, extend_schema, extend_schema_view
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -35,6 +37,15 @@ def validar_id_positivo(value, field_name):
         )
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por nome ou código."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class ProvinceViewSet(viewsets.ModelViewSet):
     serializer_class = ProvinceSerializer
     permission_classes = (PublicReadAdminWrite,)
@@ -69,6 +80,16 @@ class ProvinceViewSet(viewsets.ModelViewSet):
         desativar_provincia(province=instance, actor=self.request.user)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter("province", OpenApiTypes.INT, description="Identificador da província."),
+            OpenApiParameter("search", OpenApiTypes.STR, description="Pesquisa por município ou província."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class MunicipalityViewSet(viewsets.ModelViewSet):
     serializer_class = MunicipalitySerializer
     permission_classes = (PublicReadAdminWrite,)
@@ -111,6 +132,17 @@ class MunicipalityViewSet(viewsets.ModelViewSet):
         desativar_municipio(municipality=instance, actor=self.request.user)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        parameters=[
+            OpenApiParameter(
+                "include_inactive",
+                OpenApiTypes.BOOL,
+                description="Define `true` para incluir localizações inactivas do próprio utilizador.",
+            )
+        ],
+    ),
+)
 class UserLocationViewSet(viewsets.ModelViewSet):
     serializer_class = UserLocationSerializer
     permission_classes = (IsAuthenticated,)
@@ -139,6 +171,16 @@ class UserLocationViewSet(viewsets.ModelViewSet):
         instance.save(update_fields=("is_active", "updated_at"))
 
 
+@extend_schema_view(
+    list=extend_schema(
+        auth=[],
+        parameters=[
+            OpenApiParameter("province", OpenApiTypes.INT, description="Identificador da província."),
+            OpenApiParameter("municipality", OpenApiTypes.INT, description="Identificador do município."),
+        ],
+    ),
+    retrieve=extend_schema(auth=[]),
+)
 class ProviderCoverageViewSet(viewsets.ModelViewSet):
     serializer_class = ProviderCoverageSerializer
     http_method_names = ("get", "post", "patch", "delete", "head", "options")

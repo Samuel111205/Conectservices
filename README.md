@@ -4,6 +4,15 @@ Plataforma de marketplace de serviços inicialmente direcionada para Angola.
 O backend é a fonte das regras de negócio, consumido pelas aplicações Web e
 Mobile através da mesma API.
 
+## Documentação
+
+- [Visão geral da plataforma](docs/platform-overview.md)
+- [Guia da API](docs/api.md)
+- [Referência dos endpoints da API](docs/api-reference.md)
+- [Exemplos de utilização da API](docs/api-examples.md)
+- Schema OpenAPI: `/api/v1/schema/` e interface interactiva
+  `/api/v1/docs/` (em produção, disponíveis apenas para administradores).
+
 ## Arquitetura inicial
 
 - Monólito modular Django com Django REST Framework.
@@ -11,6 +20,10 @@ Mobile através da mesma API.
 - SQLite para desenvolvimento local e PostgreSQL para produção.
 - Redis armazena o cache partilhado e serve de broker Celery para notificações
   e emails processados em segundo plano.
+- A API aplica limites de pedidos por endereço IP e por utilizador. Em
+  produção, mantém o Redis partilhado entre processos e configura também os
+  limites de tráfego e protecção contra DDoS no proxy ou fornecedor de
+  alojamento; os limites da aplicação não substituem essa camada.
 - React com Vite (Web) e React Native (Mobile) são clientes da API, sem lógica
   de negócio duplicada.
 
@@ -19,6 +32,14 @@ Mobile através da mesma API.
 - Python 3.14 (usado na imagem Docker) ou uma versão compatível com as
   dependências de `requirements.txt`.
 - PostgreSQL e Redis em produção.
+
+## Verificações automáticas
+
+O GitHub Actions executa `manage.py check`, verifica migrações e corre os
+testes do backend; também aplica lint e build à Web e verifica os tipos da app
+Mobile. O Dependabot verifica semanalmente actualizações das dependências Python,
+Web, Mobile e acções do workflow. Antes de integrar alterações, confirma que
+todos os controlos estão verdes e revê as actualizações propostas.
 
 ## Desenvolvimento local
 
@@ -61,6 +82,10 @@ em ambientes acessíveis ao público.
 O ficheiro `.env.example` é uma referência; as variáveis de ambiente não são
 carregadas automaticamente pelo Django. Configure-as no terminal, no ambiente
 de execução ou pelo Docker Compose.
+
+Em produção, usa `config.settings.production`, HTTPS e uma `DJANGO_SECRET_KEY`
+única. A documentação da API fica restrita a administradores fora do ambiente
+de desenvolvimento.
 
 O modelo de utilizador personalizado já está definido como `AUTH_USER_MODEL`;
 por isso, a migração inicial já pode ser aplicada.
